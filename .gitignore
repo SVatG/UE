@@ -31,3 +31,11 @@
 *.out
 *.app
 main
+
+# VS stuff
+x64/
+packages/
+.vs/
+*.sdf
+packages.config
+*.opendb
