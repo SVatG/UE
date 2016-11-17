@@ -1,0 +1,63 @@
+<sync rows="128">
+	<tracks>
+		<track name="blobs:rot.x">
+			<key interpolation="1" row="0" value="0"/>
+			<key interpolation="1" row="4" value="1"/>
+			<key interpolation="1" row="8" value="-1"/>
+			<key interpolation="1" row="12" value="1"/>
+			<key interpolation="0" row="16" value="0"/>
+			<key interpolation="1" row="32" value="0"/>
+			<key interpolation="1" row="36" value="1"/>
+			<key interpolation="1" row="40" value="-1"/>
+			<key interpolation="1" row="44" value="1"/>
+			<key interpolation="0" row="48" value="0"/>
+			<key interpolation="1" row="64" value="0"/>
+			<key interpolation="1" row="68" value="1"/>
+			<key interpolation="1" row="72" value="-1"/>
+			<key interpolation="1" row="76" value="1"/>
+			<key interpolation="0" row="80" value="0"/>
+			<key interpolation="1" row="96" value="0"/>
+			<key interpolation="1" row="100" value="1"/>
+			<key interpolation="1" row="104" value="-1"/>
+			<key interpolation="1" row="108" value="1"/>
+			<key interpolation="1" row="112" value="0"/>
+			<key interpolation="0" row="127" value="6"/>
+		</track>
+		<track name="blobs:rot.y">
+			<key interpolation="1" row="16" value="0"/>
+			<key interpolation="1" row="20" value="1"/>
+			<key interpolation="1" row="24" value="-1"/>
+			<key interpolation="1" row="28" value="1"/>
+			<key interpolation="0" row="32" value="0"/>
+			<key interpolation="1" row="64" value="0"/>
+			<key interpolation="1" row="68" value="1"/>
+			<key interpolation="1" row="72" value="-1"/>
+			<key interpolation="1" row="76" value="1"/>
+			<key interpolation="1" row="80" value="0"/>
+			<key interpolation="1" row="84" value="1"/>
+			<key interpolation="1" row="88" value="-1"/>
+			<key interpolation="1" row="92" value="1"/>
+			<key interpolation="0" row="96" value="0"/>
+			<key interpolation="1" row="112" value="0"/>
+			<key interpolation="0" row="127" value="6"/>
+		</track>
+		<track name="blobs:rot.z">
+			<key interpolation="1" row="48" value="0"/>
+			<key interpolation="1" row="52" value="1"/>
+			<key interpolation="1" row="56" value="-1"/>
+			<key interpolation="1" row="60" value="1"/>
+			<key interpolation="0" row="64" value="0"/>
+			<key interpolation="1" row="80" value="0"/>
+			<key interpolation="1" row="84" value="1"/>
+			<key interpolation="1" row="88" value="-1"/>
+			<key interpolation="1" row="92" value="1"/>
+			<key interpolation="1" row="96" value="0"/>
+			<key interpolation="1" row="100" value="1"/>
+			<key interpolation="1" row="104" value="-1"/>
+			<key interpolation="1" row="108" value="1"/>
+			<key interpolation="1" row="112" value="0"/>
+			<key interpolation="0" row="127" value="6"/>
+		</track>
+	</tracks>
+	<bookmarks/>
+</sync>

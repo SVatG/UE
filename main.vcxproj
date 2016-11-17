@@ -83,6 +83,9 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <Link>
+      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -111,12 +114,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bass_rocket.cpp" />
     <ClCompile Include="effect_blobs.cpp" />
     <ClCompile Include="glad.cpp" />
     <ClCompile Include="glhelpers.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="rocket\device.c" />
+    <ClCompile Include="rocket\track.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bass_rocket.h" />
     <ClInclude Include="effects.h" />
     <ClInclude Include="glad.h" />
     <ClInclude Include="glhelpers.h" />
@@ -131,6 +138,8 @@
   <ImportGroup Label="ExtensionTargets">
     <Import Project="packages\glfw.redist.3.2.1\build\native\glfw.redist.targets" Condition="Exists('packages\glfw.redist.3.2.1\build\native\glfw.redist.targets')" />
     <Import Project="packages\glfw.3.2.1\build\native\glfw.targets" Condition="Exists('packages\glfw.3.2.1\build\native\glfw.targets')" />
+    <Import Project="packages\BASS.redist.2.4.12.1\build\native\BASS.redist.targets" Condition="Exists('packages\BASS.redist.2.4.12.1\build\native\BASS.redist.targets')" />
+    <Import Project="packages\BASS.2.4.12.1\build\native\BASS.targets" Condition="Exists('packages\BASS.2.4.12.1\build\native\BASS.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -138,5 +147,7 @@
     </PropertyGroup>
     <Error Condition="!Exists('packages\glfw.redist.3.2.1\build\native\glfw.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\glfw.redist.3.2.1\build\native\glfw.redist.targets'))" />
     <Error Condition="!Exists('packages\glfw.3.2.1\build\native\glfw.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\glfw.3.2.1\build\native\glfw.targets'))" />
+    <Error Condition="!Exists('packages\BASS.redist.2.4.12.1\build\native\BASS.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\BASS.redist.2.4.12.1\build\native\BASS.redist.targets'))" />
+    <Error Condition="!Exists('packages\BASS.2.4.12.1\build\native\BASS.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\BASS.2.4.12.1\build\native\BASS.targets'))" />
   </Target>
 </Project>

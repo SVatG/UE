@@ -11,6 +11,10 @@ static GLuint vertexInLoc;
 static GLuint normalInLoc;
 static GLuint texcoordsInLoc;
 
+static const sync_track* camRotX;
+static const sync_track* camRotY;
+static const sync_track* camRotZ;
+
 typedef struct vertexInfo {
     glm::vec3 pos;
     glm::vec3 normal;
@@ -91,6 +95,11 @@ void effectBlobsInitialize() {
 
     // Geometry
     quadBO = makeBO(GL_ARRAY_BUFFER, cube, sizeof(vertexInfo) * 36, GL_STATIC_DRAW);
+
+    // Sync
+    camRotX = sync_get_track(rocket, "blobs:rot.x");
+    camRotY = sync_get_track(rocket, "blobs:rot.y");
+    camRotZ = sync_get_track(rocket, "blobs:rot.z");
 }
 
 void effectBlobsRender() {
@@ -104,8 +113,9 @@ void effectBlobsRender() {
     
     glm::mat4 projection = glm::perspective(90.0f, (float)screenWidth / (float)screenHeight, 0.1f, 50.0f);
 
+    double bassRow = bassGetRow(stream);
     glm::mat4 modelview = glm::lookAt(glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0, 1.0, 0.0));
-    modelview *= (glm::mat4)glm::quat(glm::vec3(glfwGetTime(), glfwGetTime() * 3.0, glfwGetTime() * 2.0));
+    modelview *= (glm::mat4)glm::quat(glm::vec3(sync_get_val(camRotX, bassRow), sync_get_val(camRotY, bassRow), sync_get_val(camRotZ, bassRow))); 
     glm::mat4 normalview = glm::transpose(glm::inverse(modelview));
     
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));

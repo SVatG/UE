@@ -3,6 +3,8 @@
 
 // Global state
 static GLFWwindow* window = NULL;
+sync_device* rocket;
+HSTREAM stream;
 
 // Basic error handler
 static void glfwErrorHandler(int error, const char* description) {
@@ -39,12 +41,21 @@ static void initializeApplication() {
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);    
     glfwGetFramebufferSize(window, &screenWidth, &screenHeight);
     glViewport(0, 0, screenWidth, screenHeight);
+
+    // Set up BASS
+    BASS_Init(-1, 44100, 0, 0, 0);
+
+    // Set up rocket
+    rocket = syncStartup();
 }
 
 
 
 // Teardown
 static void terminateApplication() {
+    sync_destroy_device(rocket);
+    BASS_StreamFree(stream);
+    BASS_Free();
     glfwDestroyWindow(window);
     glfwTerminate();
 }
@@ -52,16 +63,20 @@ static void terminateApplication() {
 // Main
 int main() {
     initializeApplication();
+    
+    // Music!
+    stream = BASS_StreamCreateFile(false, "sbit5.ogg", 0, 0, BASS_STREAM_PRESCAN);
+    BASS_Start();
+    BASS_ChannelPlay(stream, false);
 
     effectBlobsInitialize();
 
     // Demo main loop
     while (!glfwWindowShouldClose(window)) {
-        // TODO: anything that actually renders
-        // TODO: music playing
         // TODO: postprod / fbos
-        // TODO: rocket init / integration
+        syncUpdate(rocket, stream);
 
+        // Test effect
         effectBlobsRender();
 
         // Draw to screen
