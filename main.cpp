@@ -1,4 +1,5 @@
 #include "main.h"
+#include "effects.h"
 
 // Global state
 static GLFWwindow* window = NULL;
@@ -51,14 +52,18 @@ static void terminateApplication() {
 // Main
 int main() {
     initializeApplication();
-    
+
+    effectBlobsInitialize();
+
     // Demo main loop
     while (!glfwWindowShouldClose(window)) {
         // TODO: anything that actually renders
         // TODO: music playing
         // TODO: postprod / fbos
         // TODO: rocket init / integration
-        
+
+        effectBlobsRender();
+
         // Draw to screen
         glfwSwapBuffers(window);
         
@@ -66,5 +71,7 @@ int main() {
         glfwPollEvents();
     }
     
+    effectBlobsTerminate();
+
     terminateApplication();
 }

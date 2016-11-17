@@ -9,7 +9,9 @@ CXXFLAGS= \
 LIBS=-lm
 OBJECTS=\
 	main.o\
-	glad.o
+	glad.o\
+	glhelpers.o\
+	effect_blobs.o
 
 all: $(OBJECTS)
 	g++ $(OBJECTS) -lm -lGL -lglfw -ldl -o main
