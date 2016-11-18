@@ -25,5 +25,5 @@ void main() {
     float lambert = max(0.0f, dot(normalize(lightDir), normal));
     float light = min(lambert + 0.1f, 1.0f) * 0.5f;
 
-    outColor = vec4(colIn.xyz * light * (1.0f + blobglow * 2.0f), worldPos.z);
+    outColor = vec4(colIn.xyz * light + colIn.xyz * (blobglow * 2.0f), worldPos.z);
 }
