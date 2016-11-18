@@ -23,7 +23,7 @@ void main() {
     // Sun is at infinity
     vec3 lightDir = vec3(1.0f, 1.0f, 1.0f);
     float lambert = max(0.0f, dot(normalize(lightDir), normal));
-    float light = min(lambert + 0.2f, 1.0f);
+    float light = min(lambert + 0.1f, 1.0f) * 0.5f;
 
-    outColor = vec4(colIn.xyz * light * (1.0f + blobglow * 0.5f), worldPos.z);
+    outColor = vec4(colIn.xyz * light * (1.0f + blobglow * 2.0f), worldPos.z);
 }
