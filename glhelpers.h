@@ -12,7 +12,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-char* loadFile(char* name);
+char* loadFile(const char* name);
 float randFloat();
 float randFloatUnit();
 
@@ -21,7 +21,7 @@ GLuint genFloatTexture(float *data, int width, int height);
 GLuint makeBO(GLenum type, void* data, GLsizei size, int accessFlags);
 GLuint makeTextureBuffer(int w, int h, GLenum format, GLint internalFormat);
 
-GLuint loadShader(GLenum type, char *file);
+GLuint loadShader(GLenum type, const char *file);
 GLuint makeShaderProgram(GLuint vertexShader, GLuint fragmentShader);
 
 GLuint loadTexture(const char *filename);

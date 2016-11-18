@@ -18,6 +18,8 @@ static const sync_track* camRotX;
 static const sync_track* camRotY;
 static const sync_track* camRotZ;
 
+static GLuint glowyTexture;
+
 typedef struct blobInfo {
     const sync_track* t;
     glm::vec3 pos;
@@ -126,16 +128,19 @@ void effectBlobsInitialize() {
     blobs[1].t = sync_get_track(rocket, "blobs:blob2.t");
     blobs[2].t = sync_get_track(rocket, "blobs:blob3.t");
     radius = sync_get_track(rocket, "blobs:radius");
+    
+    // Textures
+    glowyTexture = loadTexture("texture/glowy.tga");
 }
 
 glm::vec3 blobPos(float t, int i) {
     if(i == 0) {
-        return glm::vec3(sin(t) + 2.0f * sin(2.0f * t), cos(t) + 2.0f * cos(2.0f * t), -sin(3.0f * t)) * 3.0;
+        return glm::vec3(sin(t) + 2.0f * sin(2.0f * t), cos(t) + 2.0f * cos(2.0f * t), -sin(3.0f * t)) * 2.85;
     }
     else if (i == 1) {
-        return glm::vec3(-sin(3.0f * t), sin(t) + 2.0f * sin(2.0f * t), cos(t) + 2.0f * cos(2.0f * t)) * 3.0;
+        return glm::vec3(-sin(3.0f * t), sin(t) + 2.0f * sin(2.0f * t), cos(t) + 2.0f * cos(2.0f * t)) * 2.85;
     }
-    return glm::vec3(cos(t) + 2.0f * cos(2.0f * t), -sin(3.0f * t), sin(t) + 2.0f * sin(2.0f * t)) * 3.0;
+    return glm::vec3(cos(t) + 2.0f * cos(2.0f * t), -sin(3.0f * t), sin(t) + 2.0f * sin(2.0f * t)) * 2.85;
 }
 
 void effectBlobsRender() {
@@ -143,14 +148,23 @@ void effectBlobsRender() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-
+    
     double bassRow = bassGetRow(stream);
 
     // Bind shader and set up uniforms
     glUseProgram(shaderProgram);
     
     glm::mat4 projection = glm::perspective(90.0f, (float)screenWidth / (float)screenHeight, 0.1f, 50.0f);
+    glm::mat4 modelview = glm::lookAt(glm::vec3(0.0f, 0.0f, -20.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0, 1.0, 0.0));
+    modelview *= (glm::mat4)glm::quat(glm::vec3(sync_get_val(camRotX, bassRow), sync_get_val(camRotY, bassRow), sync_get_val(camRotZ, bassRow))); 
+    glm::mat4 normalview = glm::transpose(glm::inverse(modelview));
+    
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(modelviewLoc, 1, GL_FALSE, glm::value_ptr(modelview));
+    glUniformMatrix4fv(normalviewLoc, 1, GL_FALSE, glm::value_ptr(normalview));
 
+    glUniform1i(glGetUniformLocation(shaderProgram, "textureIn"), 0);
+    
     // Update blob pos
     for(int i = 0; i < BLOB_COUNT; i++) {
        blobs[i].pos = blobPos((float)sync_get_val(blobs[i].t, bassRow), i);
@@ -184,14 +198,10 @@ void effectBlobsRender() {
         }
     }
 
-    glm::mat4 modelview = glm::lookAt(glm::vec3(0.0f, 0.0f, -20.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0, 1.0, 0.0));
-    modelview *= (glm::mat4)glm::quat(glm::vec3(sync_get_val(camRotX, bassRow), sync_get_val(camRotY, bassRow), sync_get_val(camRotZ, bassRow))); 
-    glm::mat4 normalview = glm::transpose(glm::inverse(modelview));
+    // Set up texture
+    glActiveTexture(GL_TEXTURE0);  
+    glBindTexture(GL_TEXTURE_2D, glowyTexture);
     
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-    glUniformMatrix4fv(modelviewLoc, 1, GL_FALSE, glm::value_ptr(modelview));
-    glUniformMatrix4fv(normalviewLoc, 1, GL_FALSE, glm::value_ptr(normalview));
-
     // Bind buffers and draw
     glBindBuffer(GL_ARRAY_BUFFER, quadBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertexInfo) * 36 * BLOB_EXTENT * BLOB_EXTENT * BLOB_EXTENT, blobVertices, GL_DYNAMIC_DRAW);
@@ -209,5 +219,8 @@ void effectBlobsRender() {
 }
 
 void effectBlobsTerminate() {
-   glDeleteProgram(shaderProgram);
+    glDeleteTextures(1, &glowyTexture);
+    free(blobVertices);
+    glDeleteBuffers(1, &quadBO);
+    glDeleteProgram(shaderProgram);
 }

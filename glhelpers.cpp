@@ -6,8 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef WIN32
 // "THIS FUNCTION IS UNSAFE"
 #pragma warning(disable: 4996)
+#endif
 
 // Random float 0 -> 1
 float randFloat() {
@@ -45,7 +47,7 @@ GLuint makeTextureBuffer(int w, int h, GLenum format, GLint internalFormat) {
 }
 
 // Load text from a file.
-char* loadFile(char* name) {
+char* loadFile(const char* name) {
     long size;
     char* buffer;
     FILE* fp = fopen(name, "rb");
@@ -63,7 +65,7 @@ char* loadFile(char* name) {
 }
 
 // Load shader from a file.
-GLuint loadShader(GLenum type, char *file) {
+GLuint loadShader(GLenum type, const char *file) {
     GLchar *shaderSrc = loadFile(file);
     GLsizei length = (GLsizei)strlen(shaderSrc);
     GLuint shader = glCreateShader(type);
@@ -135,7 +137,7 @@ void *readTga(const char *filename, int *width, int *height, int *alpha) {
         char image_descriptor;
     } header;
 
-    int color_map_size, pixels_size;
+    size_t color_map_size, pixels_size;
     FILE *f;
     size_t read;
     void *pixels;
@@ -247,7 +249,7 @@ GLuint loadTexture(const char *filename) {
         alpha == 1 ? GL_BGRA : GL_BGR,
         GL_UNSIGNED_BYTE,
         pixels
-        );
+    );
     glGenerateMipmap(GL_TEXTURE_2D);
 
     // Release buffer.
@@ -289,7 +291,7 @@ GLuint genFloatTexture(float *data, int width, int height) {
 
 // Debug context log printer
 void printDebugLog(unsigned int source, unsigned int type, unsigned int id, unsigned int severity, const char* message) {
-    char debSource[16], debType[20], debSev[5];
+    char debSource[16], debType[20], debSev[8];
     if(source == GL_DEBUG_SOURCE_API)
         strcpy(debSource, "OpenGL");
     else if(source == GL_DEBUG_SOURCE_WINDOW_SYSTEM)
