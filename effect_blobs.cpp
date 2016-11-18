@@ -13,6 +13,7 @@ static GLuint normalviewLoc;
 static GLuint vertexInLoc;
 static GLuint normalInLoc;
 static GLuint texcoordsInLoc;
+static GLuint blobglowInLoc;
 
 static const sync_track* camRotX;
 static const sync_track* camRotY;
@@ -32,6 +33,7 @@ typedef struct vertexInfo {
     glm::vec3 pos;
     glm::vec3 normal;
     glm::vec2 texcoord;
+    float glow;
 } vertexInfo;
 
 static vertexInfo* blobVertices;
@@ -39,58 +41,59 @@ static vertexInfo* blobVertices;
 // Too-lazy-for-element-buffer quads
 vertexInfo cube[] = {
     // Front
-    {{-1, -1,  1}, {0, 0,  1}, {0, 0}},
-    {{ 1, -1,  1}, {0, 0,  1}, {1, 0}},
-    {{-1,  1,  1}, {0, 0,  1}, {0, 1}},
-    {{ 1, -1,  1}, {0, 0,  1}, {1, 0}},
-    {{ 1,  1,  1}, {0, 0,  1}, {1, 1}},
-    {{-1,  1,  1}, {0, 0,  1}, {0, 1}},
+    {{-1, -1,  1}, {0, 0,  1}, {0, 0}, 1.0},
+    {{ 1, -1,  1}, {0, 0,  1}, {1, 0}, 1.0},
+    {{-1,  1,  1}, {0, 0,  1}, {0, 1}, 1.0},
+    {{ 1, -1,  1}, {0, 0,  1}, {1, 0}, 1.0},
+    {{ 1,  1,  1}, {0, 0,  1}, {1, 1}, 1.0},
+    {{-1,  1,  1}, {0, 0,  1}, {0, 1}, 1.0},
 
     // Back
-    {{-1, -1, -1}, {0, 0, -1}, {0, 0}},
-    {{-1,  1, -1}, {0, 0, -1}, {0, 1}},
-    {{ 1, -1, -1}, {0, 0, -1}, {1, 0}},
-    {{ 1, -1, -1}, {0, 0, -1}, {1, 0}},    
-    {{-1,  1, -1}, {0, 0, -1}, {0, 1}},
-    {{ 1,  1, -1}, {0, 0, -1}, {1, 1}},
+    {{-1, -1, -1}, {0, 0, -1}, {0, 0}, 1.0},
+    {{-1,  1, -1}, {0, 0, -1}, {0, 1}, 1.0},
+    {{ 1, -1, -1}, {0, 0, -1}, {1, 0}, 1.0},
+    {{ 1, -1, -1}, {0, 0, -1}, {1, 0}, 1.0},    
+    {{-1,  1, -1}, {0, 0, -1}, {0, 1}, 1.0},
+    {{ 1,  1, -1}, {0, 0, -1}, {1, 1}, 1.0},
 
     // Left
-    {{-1, -1, -1}, {-1, 0, 0}, {0, 0}},
-    {{-1, -1,  1}, {-1, 0, 0}, {0, 1}},
-    {{-1,  1, -1}, {-1, 0, 0}, {1, 0}},
-    {{-1,  1, -1}, {-1, 0, 0}, {1, 0}},
-    {{-1, -1,  1}, {-1, 0, 0}, {0, 1}},
-    {{-1,  1,  1}, {-1, 0, 0}, {1, 1}},
+    {{-1, -1, -1}, {-1, 0, 0}, {0, 0}, 1.0},
+    {{-1, -1,  1}, {-1, 0, 0}, {0, 1}, 1.0},
+    {{-1,  1, -1}, {-1, 0, 0}, {1, 0}, 1.0},
+    {{-1,  1, -1}, {-1, 0, 0}, {1, 0}, 1.0},
+    {{-1, -1,  1}, {-1, 0, 0}, {0, 1}, 1.0},
+    {{-1,  1,  1}, {-1, 0, 0}, {1, 1}, 1.0},
 
     // Right
-    {{ 1, -1, -1}, { 1, 0, 0}, {0, 0}},
-    {{ 1,  1, -1}, { 1, 0, 0}, {1, 0}},
-    {{ 1, -1,  1}, { 1, 0, 0}, {0, 1}},
-    {{ 1,  1, -1}, { 1, 0, 0}, {1, 0}},
-    {{ 1,  1,  1}, { 1, 0, 0}, {1, 1}},
-    {{ 1, -1,  1}, { 1, 0, 0}, {0, 1}},
+    {{ 1, -1, -1}, { 1, 0, 0}, {0, 0}, 1.0},
+    {{ 1,  1, -1}, { 1, 0, 0}, {1, 0}, 1.0},
+    {{ 1, -1,  1}, { 1, 0, 0}, {0, 1}, 1.0},
+    {{ 1,  1, -1}, { 1, 0, 0}, {1, 0}, 1.0},
+    {{ 1,  1,  1}, { 1, 0, 0}, {1, 1}, 1.0},
+    {{ 1, -1,  1}, { 1, 0, 0}, {0, 1}, 1.0},
 
     // Top
-    {{-1, -1, -1}, { 0, -1, 0}, {0, 0}},
-    {{ 1, -1, -1}, { 0, -1, 0}, {1, 0}},
-    {{-1, -1,  1}, { 0, -1, 0}, {0, 1}},
-    {{ 1, -1, -1}, { 0, -1, 0}, {1, 0}},
-    {{ 1, -1,  1}, { 0, -1, 0}, {1, 1}},
-    {{-1, -1,  1}, { 0, -1, 0}, {0, 1}},
+    {{-1, -1, -1}, { 0, -1, 0}, {0, 0}, 1.0},
+    {{ 1, -1, -1}, { 0, -1, 0}, {1, 0}, 1.0},
+    {{-1, -1,  1}, { 0, -1, 0}, {0, 1}, 1.0},
+    {{ 1, -1, -1}, { 0, -1, 0}, {1, 0}, 1.0},
+    {{ 1, -1,  1}, { 0, -1, 0}, {1, 1}, 1.0},
+    {{-1, -1,  1}, { 0, -1, 0}, {0, 1}, 1.0},
 
     // Bottom
-    {{-1, 1, -1}, { 0, 1, 0}, {0, 0}},
-    {{-1, 1,  1}, { 0, 1, 0}, {0, 1}},
-    {{ 1, 1, -1}, { 0, 1, 0}, {1, 0}},
-    {{ 1, 1, -1}, { 0, 1, 0}, {1, 0}},
-    {{-1, 1,  1}, { 0, 1, 0}, {0, 1}},
-    {{ 1, 1,  1}, { 0, 1, 0}, {1, 1}},
+    {{-1,  1, -1}, { 0, 1, 0}, {0, 0}, 0.0},
+    {{-1,  1,  1}, { 0, 1, 0}, {0, 1}, 0.0},
+    {{ 1,  1, -1}, { 0, 1, 0}, {1, 0}, 0.0},
+    {{ 1,  1, -1}, { 0, 1, 0}, {1, 0}, 0.0},
+    {{-1,  1,  1}, { 0, 1, 0}, {0, 1}, 0.0},
+    {{ 1,  1,  1}, { 0, 1, 0}, {1, 1}, 0.0},
 };
 
-void cubeAt(vertexInfo* buffer, glm::vec3 at, glm::vec3 size) {
+void cubeAt(vertexInfo* buffer, glm::vec3 at, glm::vec3 size, float glow) {
     for(int i = 0; i < 36; i++) {
         vertexInfo cubeVert = cube[i];
         cubeVert.pos = cubeVert.pos * size + at;
+        cubeVert.glow = glow;
         buffer[i] = cubeVert;
     }
 }
@@ -100,8 +103,8 @@ void effectBlobsInitialize() {
     glClearColor(0.2f, 0.1f, 0.3f, 1.0f);
     
     // A shader
-    GLuint vertexShader = loadShader(GL_VERTEX_SHADER, "shaders/basic.vert.glsl");
-    GLuint fragmentShader = loadShader(GL_FRAGMENT_SHADER, "shaders/basic_lighting.frag.glsl");
+    GLuint vertexShader = loadShader(GL_VERTEX_SHADER, "shaders/glowy_blobs.vert.glsl");
+    GLuint fragmentShader = loadShader(GL_FRAGMENT_SHADER, "shaders/glowy_blobs_lighting.frag.glsl");
     shaderProgram = makeShaderProgram(fragmentShader, vertexShader);
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
@@ -115,7 +118,8 @@ void effectBlobsInitialize() {
     vertexInLoc = glGetAttribLocation(shaderProgram, "vertexIn");
     normalInLoc = glGetAttribLocation(shaderProgram, "normalIn");
     texcoordsInLoc = glGetAttribLocation(shaderProgram, "texcoordsIn");
-
+    blobglowInLoc = glGetAttribLocation(shaderProgram, "blobglowIn");
+    
     // Geometry
     blobVertices = (vertexInfo*)malloc(sizeof(vertexInfo) * 36 * BLOB_EXTENT * BLOB_EXTENT * BLOB_EXTENT);
     quadBO = makeBO(GL_ARRAY_BUFFER, blobVertices, sizeof(vertexInfo) * 36 * BLOB_EXTENT * BLOB_EXTENT * BLOB_EXTENT, GL_DYNAMIC_DRAW);
@@ -188,11 +192,20 @@ void effectBlobsRender() {
                 }
                 blobValue = pow(fmin(blobValue, 1.0f), 10.0f);
                 blobValue = blobValue < 0.2f ? 0.0f : blobValue;
-
+                
+                int blobState = floor(((float)((int)bassRow % 16)) / 4.0);
+                float blobGlow = 0.0f;
+                if(rand() % 4 == blobState) {
+                    blobGlow = bassRow / 4.0;
+                    blobGlow = 1.0 - (blobGlow - floor(blobGlow));
+                    blobGlow = fmax(0.0f, blobGlow);
+                }
+            
                 cubeAt(
                     &blobVertices[(x + y * BLOB_EXTENT + z * BLOB_EXTENT * BLOB_EXTENT) * 36], 
                     cubeCenter, 
-                    glm::vec3((randFloat() * 0.3f + 0.5f) * blobValue)
+                    glm::vec3((randFloat() * 0.3f + 0.5f) * blobValue),
+                    blobGlow
                 );
             }
         }
@@ -214,6 +227,10 @@ void effectBlobsRender() {
 
     glEnableVertexAttribArray(texcoordsInLoc);
     glVertexAttribPointer(texcoordsInLoc, 2, GL_FLOAT, GL_FALSE, sizeof(vertexInfo), (void*)(sizeof(float) * 6));
+    
+    glEnableVertexAttribArray(blobglowInLoc);
+    glVertexAttribPointer(blobglowInLoc, 1, GL_FLOAT, GL_FALSE, sizeof(vertexInfo), (void*)(sizeof(float) * 8));
+
 
     glDrawArrays(GL_TRIANGLES, 0, 36 * BLOB_EXTENT * BLOB_EXTENT * BLOB_EXTENT);
 }
