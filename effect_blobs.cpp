@@ -20,6 +20,8 @@ static const sync_track* camRotY;
 static const sync_track* camRotZ;
 
 static GLuint glowyTexture;
+static GLuint postprocTexture;
+static GLuint postprocFBO;
 
 typedef struct blobInfo {
     const sync_track* t;
@@ -135,6 +137,8 @@ void effectBlobsInitialize() {
     
     // Textures
     glowyTexture = loadTexture("texture/glowy.tga");
+    postprocTexture = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA, GL_RGBA);
+    postprocFBO = makeFBO(postprocTexture);
 }
 
 glm::vec3 blobPos(float t, int i) {
@@ -148,6 +152,8 @@ glm::vec3 blobPos(float t, int i) {
 }
 
 void effectBlobsRender() {
+    glBindFramebuffer(GL_FRAMEBUFFER, postprocFBO);
+    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -233,6 +239,11 @@ void effectBlobsRender() {
 
 
     glDrawArrays(GL_TRIANGLES, 0, 36 * BLOB_EXTENT * BLOB_EXTENT * BLOB_EXTENT);
+    
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);    
+    renderSAQ(postprocTexture);
 }
 
 void effectBlobsTerminate() {

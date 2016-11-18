@@ -11,6 +11,11 @@
 #pragma warning(disable: 4996)
 #endif
 
+// Vertices and shader for a single screen aligned quad
+static GLuint saqBO = 0;
+static GLuint saqShader = 0;
+static GLuint saqVertLoc = 0;
+
 // Random float 0 -> 1
 float randFloat() {
     return(static_cast <float> (rand()) / static_cast <float> (RAND_MAX));
@@ -36,14 +41,72 @@ GLuint makeTextureBuffer(int w, int h, GLenum format, GLint internalFormat) {
 
     glGenTextures(1, &buffertex);
     glBindTexture(GL_TEXTURE_2D, buffertex);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);    
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0, format, GL_FLOAT, NULL);
-
+    
     return buffertex;
+}
+
+// Function that makes an FBO with a 24bit Z buffer and no stencil buffer,
+// with a texture attached to colour output 0.
+GLuint makeFBO(GLuint texture) {
+    // Determine texture size
+    int width = 0;
+    int height = 0;
+    
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    // Make FBO and renderbuffer
+    GLuint fbo;
+
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+
+    GLuint depthBuffer;
+    glGenRenderbuffers(1, &depthBuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
+
+    return fbo;
+}
+
+// Render a screen aligned quad with the given texture
+void renderSAQ(GLuint texture) {
+    if(saqBO == 0) {
+        GLchar* saqVSSource = (GLchar*)"#version 150\n\nin vec2 pos;\nout vec2 texcoord;\nvoid main(void){gl_Position=vec4(pos*2.0f-1.0f, 0.0f, 1.0f);texcoord=pos;}\n\0";
+        GLchar* saqFSSource = (GLchar*)"#version 150\n\nin vec2 texcoord;\nuniform sampler2D tex;\nout vec4 outColor;\nvoid main(void){outColor=texture(tex, texcoord);}\n\0";
+        
+        GLuint saqVS = buildShader(GL_VERTEX_SHADER, saqVSSource);
+        GLuint saqFS = buildShader(GL_FRAGMENT_SHADER, saqFSSource);
+        saqShader = makeShaderProgram(saqVS, saqFS);
+        
+        glUniform1i(glGetUniformLocation(saqShader, "tex"), 0);
+        saqVertLoc = glGetAttribLocation(saqShader, "pos");
+        
+        float saqVertices[] = {0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0};
+        saqBO = makeBO(GL_ARRAY_BUFFER, saqVertices, sizeof(float) * 12, GL_STATIC_DRAW);
+    }
+    
+    glUseProgram(saqShader);
+    glActiveTexture(GL_TEXTURE0);  
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindBuffer(GL_ARRAY_BUFFER, saqBO);    
+    
+    glEnableVertexAttribArray(saqVertLoc);
+    glVertexAttribPointer(saqVertLoc, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+    
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDisableVertexAttribArray(saqVertLoc);
 }
 
 // Load text from a file.
@@ -64,30 +127,39 @@ char* loadFile(const char* name) {
     return(buffer);
 }
 
-// Load shader from a file.
-GLuint loadShader(GLenum type, const char *file) {
-    GLchar *shaderSrc = loadFile(file);
+// Compile shader given directly
+GLuint buildShader(GLenum type, GLchar* shaderSrc) {
     GLsizei length = (GLsizei)strlen(shaderSrc);
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, (const GLchar**)&shaderSrc, &length);
-    free(shaderSrc);
     glCompileShader(shader);
 
     // Check for failure, display errors.
     GLint status;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 
-    fprintf(stderr, "Shader compile log: %s\n", file);
     char log[65536];
     glGetShaderInfoLog(shader, 65535, 0, log);
-    fprintf(stderr, "%s", log);
-
+    
+    if(strlen(log) != 0) {
+        fprintf(stderr, "Shader compile log:\n");
+        fprintf(stderr, "%s", log);
+    }
+    
     if(status == 0) {
         fprintf(stderr, "(closing)\n");
         fgetc(stdin);
         exit(-1);
     }
 
+    return shader;
+}
+
+// Load shader from a file.
+GLuint loadShader(GLenum type, const char *file) {
+    GLchar* shaderSrc = loadFile(file);
+    GLuint shader = buildShader(type, shaderSrc);
+    free(shaderSrc);
     return shader;
 }
 
@@ -259,8 +331,8 @@ GLuint loadTexture(const char *filename) {
 }
 
 
-// Load a texture from a TGA file.
-GLuint genFloatTexture(float *data, int width, int height) {	
+// Generate a float texture from given data
+GLuint genFloatTexture(float *data, int width, int height) {
     // Generate texture, bind as active texture.
     GLuint texture;
     glGenTextures(1, &texture);

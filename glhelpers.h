@@ -20,8 +20,11 @@ GLuint genFloatTexture(float *data, int width, int height);
 
 GLuint makeBO(GLenum type, void* data, GLsizei size, int accessFlags);
 GLuint makeTextureBuffer(int w, int h, GLenum format, GLint internalFormat);
+GLuint makeFBO(GLuint texture);
+void renderSAQ(GLuint texture);
 
 GLuint loadShader(GLenum type, const char *file);
+GLuint buildShader(GLenum type, GLchar* shaderSrc);
 GLuint makeShaderProgram(GLuint vertexShader, GLuint fragmentShader);
 
 GLuint loadTexture(const char *filename);
