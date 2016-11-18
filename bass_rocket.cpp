@@ -1,8 +1,11 @@
 #include "bass_rocket.h"
 
+#ifdef WIN32
 #include <direct.h>  
+#endif
 #include <stdio.h>  
 #include <stdlib.h>  
+#include <cmath>
 
 static const bool syncClient = false;
 

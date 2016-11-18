@@ -328,7 +328,11 @@ void printDebugLog(unsigned int source, unsigned int type, unsigned int id, unsi
 
 // Debug context log callback
 unsigned int glDebugLogLevel = GL_DEBUG_SEVERITY_LOW;
+#ifdef WIN32
 void __stdcall debugCallback(
+#else
+void debugCallback(
+#endif
     GLenum source,
     GLenum type,
     GLuint id,

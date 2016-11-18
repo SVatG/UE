@@ -12,7 +12,8 @@ CFLAGS= \
 	-ffast-math \
 	-O3 \
 	-g \
-	-std=gnu11 \	
+	-std=gnu11
+
 
 LIBS=-lm
 OBJECTS=\
@@ -20,11 +21,12 @@ OBJECTS=\
 	glad.o\
 	glhelpers.o\
 	effect_blobs.o \
-	rocket\device.o \
-	rocket\track.o \
+	rocket/device.o \
+	rocket/track.o \
+	bass_rocket.o
 	
 all: $(OBJECTS)
-	g++ $(OBJECTS) -lm -lGL -lglfw -ldl -o main
+	g++ $(OBJECTS) -L. -lbass -lm -lGL -lglfw -ldl -o main
     
 clean:
 	rm -r *.o
