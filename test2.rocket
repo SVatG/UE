@@ -32,8 +32,7 @@
 			<key row="172" interpolation="2" value="2"/>
 			<key row="174" interpolation="2" value="3"/>
 			<key row="184" interpolation="2" value="4"/>
-			<key row="192" interpolation="1" value="0"/>
-			<key row="384" interpolation="0" value="30"/>
+			<key row="192" interpolation="0" value="0"/>
 		</track>
 		<track name="blobs:rot.y">
 			<key row="16" interpolation="1" value="0"/>
@@ -62,7 +61,7 @@
 			<key row="170" interpolation="2" value="2"/>
 			<key row="176" interpolation="2" value="3"/>
 			<key row="182" interpolation="2" value="4"/>
-			<key row="192" interpolation="0" value="-1"/>
+			<key row="192" interpolation="0" value="0"/>
 		</track>
 		<track name="blobs:rot.z">
 			<key row="48" interpolation="1" value="0"/>
@@ -133,13 +132,6 @@
 			<key row="288" interpolation="1" value="7"/>
 			<key row="320" interpolation="1" value="3"/>
 			<key row="352" interpolation="1" value="10"/>
-		</track>
-		<track name="blobs:radius">
-			<key row="0" interpolation="0" value="10"/>
-			<key row="48" interpolation="2" value="10"/>
-			<key row="64" interpolation="0" value="2"/>
-			<key row="256" interpolation="2" value="2"/>
-			<key row="288" interpolation="0" value="10"/>
 		</track>
 	</tracks>
 	<bookmarks/>

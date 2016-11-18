@@ -9,6 +9,16 @@
 // "THIS FUNCTION IS UNSAFE"
 #pragma warning(disable: 4996)
 
+// Random float 0 -> 1
+float randFloat() {
+    return(static_cast <float> (rand()) / static_cast <float> (RAND_MAX));
+}
+
+// Random float -1 -> 1
+float randFloatUnit() {
+    return(randFloat() * 2.0 - 1.0);
+}
+
 // Simple helper to make a single buffer object.
 GLuint makeBO(GLenum type, void* data, GLsizei size, int accessFlags) {
     GLuint bo;

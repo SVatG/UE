@@ -13,6 +13,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 char* loadFile(char* name);
+float randFloat();
+float randFloatUnit();
 
 GLuint genFloatTexture(float *data, int width, int height);
 
