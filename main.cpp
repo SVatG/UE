@@ -49,8 +49,6 @@ static void initializeApplication() {
     rocket = syncStartup();
 }
 
-
-
 // Teardown
 static void terminateApplication() {
     sync_destroy_device(rocket);

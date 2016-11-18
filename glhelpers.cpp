@@ -11,10 +11,8 @@
 #pragma warning(disable: 4996)
 #endif
 
-// Vertices and shader for a single screen aligned quad
+// Vertices for a single screen aligned quad
 static GLuint saqBO = 0;
-static GLuint saqShader = 0;
-static GLuint saqVertLoc = 0;
 
 // Random float 0 -> 1
 float randFloat() {
@@ -23,7 +21,7 @@ float randFloat() {
 
 // Random float -1 -> 1
 float randFloatUnit() {
-    return(randFloat() * 2.0 - 1.0);
+    return(randFloat() * 2.0f - 1.0f);
 }
 
 // Simple helper to make a single buffer object.
@@ -80,28 +78,38 @@ GLuint makeFBO(GLuint texture) {
     return fbo;
 }
 
+// Build a fullscreen shader
+// The fragment program gets a "texcoord" input from 0 to 1.
+GLuint buildSaqShaderProgram(GLchar* saqFSSource) {
+    GLchar* saqVSSource = (GLchar*)"#version 150\n\nin vec2 pos;\nout vec2 texcoord;\nvoid main(void){gl_Position=vec4(pos*2.0f-1.0f, 0.0f, 1.0f);texcoord=pos;}\n\0";
+
+    GLuint saqVS = buildShader(GL_VERTEX_SHADER, saqVSSource);
+    GLuint saqFS = buildShader(GL_FRAGMENT_SHADER, saqFSSource);
+    GLuint shaderProgram = makeShaderProgram(saqVS, saqFS);
+    glDeleteShader(saqVS);
+    glDeleteShader(saqFS);
+
+    return(shaderProgram);
+}
+
+// As above, but load from file
+GLuint loadSaqShaderProgram(const char* file) {
+    GLchar* shaderSrc = loadFile(file);
+    GLuint program = buildSaqShaderProgram(shaderSrc);
+    free(shaderSrc);
+    return program;
+}
+
 // Render a screen aligned quad with the given texture
-void renderSAQ(GLuint texture) {
-    if(saqBO == 0) {
-        GLchar* saqVSSource = (GLchar*)"#version 150\n\nin vec2 pos;\nout vec2 texcoord;\nvoid main(void){gl_Position=vec4(pos*2.0f-1.0f, 0.0f, 1.0f);texcoord=pos;}\n\0";
-        GLchar* saqFSSource = (GLchar*)"#version 150\n\nin vec2 texcoord;\nuniform sampler2D tex;\nout vec4 outColor;\nvoid main(void){outColor=texture(tex, texcoord);}\n\0";
-        
-        GLuint saqVS = buildShader(GL_VERTEX_SHADER, saqVSSource);
-        GLuint saqFS = buildShader(GL_FRAGMENT_SHADER, saqFSSource);
-        saqShader = makeShaderProgram(saqVS, saqFS);
-        
-        glUniform1i(glGetUniformLocation(saqShader, "tex"), 0);
-        saqVertLoc = glGetAttribLocation(saqShader, "pos");
-        
-        float saqVertices[] = {0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0};
-        saqBO = makeBO(GL_ARRAY_BUFFER, saqVertices, sizeof(float) * 12, GL_STATIC_DRAW);
-    }
-    
+void renderSAQ(GLuint saqShader) {
     glUseProgram(saqShader);
-    glActiveTexture(GL_TEXTURE0);  
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glBindBuffer(GL_ARRAY_BUFFER, saqBO);    
+    if(saqBO == 0) {
+        float saqVertices[] = {0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0};
+        saqBO = makeBO(GL_ARRAY_BUFFER, saqVertices, sizeof(float) * 12, GL_STATIC_DRAW);
+    }  
     
+    GLuint saqVertLoc = glGetAttribLocation(saqShader, "pos");
+    glBindBuffer(GL_ARRAY_BUFFER, saqBO);
     glEnableVertexAttribArray(saqVertLoc);
     glVertexAttribPointer(saqVertLoc, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
     

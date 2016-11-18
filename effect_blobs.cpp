@@ -4,6 +4,8 @@
 #define BLOB_COUNT 3
 
 static GLuint shaderProgram;
+static GLuint blurShaderProgram;
+static GLuint composeShaderProgram;
 static GLuint quadBO;
 
 static GLuint projectionLoc;
@@ -20,8 +22,15 @@ static const sync_track* camRotY;
 static const sync_track* camRotZ;
 
 static GLuint glowyTexture;
-static GLuint postprocTexture;
-static GLuint postprocFBO;
+
+static GLuint postprocTextureInitial;
+static GLuint postprocFBOInitial;
+
+static GLuint postprocTextureA;
+static GLuint postprocFBOA;
+
+static GLuint postprocTextureB;
+static GLuint postprocFBOB;
 
 typedef struct blobInfo {
     const sync_track* t;
@@ -111,6 +120,10 @@ void effectBlobsInitialize() {
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
+    // Postprocessing
+    blurShaderProgram = loadSaqShaderProgram("shaders/blur.frag.glsl");
+    composeShaderProgram = loadSaqShaderProgram("shaders/glow_compose.frag.glsl");
+
     // Uniforms
     projectionLoc = glGetUniformLocation(shaderProgram, "projection");
     modelviewLoc = glGetUniformLocation(shaderProgram, "modelview");
@@ -137,8 +150,15 @@ void effectBlobsInitialize() {
     
     // Textures
     glowyTexture = loadTexture("texture/glowy.tga");
-    postprocTexture = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA, GL_RGBA);
-    postprocFBO = makeFBO(postprocTexture);
+
+    postprocTextureInitial = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA, GL_RGBA);
+    postprocFBOInitial = makeFBO(postprocTextureInitial);
+
+    postprocTextureA = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA, GL_RGBA);
+    postprocFBOA = makeFBO(postprocTextureA);
+
+    postprocTextureB = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA, GL_RGBA);
+    postprocFBOB = makeFBO(postprocTextureB);
 }
 
 glm::vec3 blobPos(float t, int i) {
@@ -152,14 +172,14 @@ glm::vec3 blobPos(float t, int i) {
 }
 
 void effectBlobsRender() {
-    glBindFramebuffer(GL_FRAMEBUFFER, postprocFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, postprocFBOInitial);
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     
-    double bassRow = bassGetRow(stream);
+    float bassRow = (float)bassGetRow(stream);
 
     // Bind shader and set up uniforms
     glUseProgram(shaderProgram);
@@ -199,11 +219,11 @@ void effectBlobsRender() {
                 blobValue = pow(fmin(blobValue, 1.0f), 10.0f);
                 blobValue = blobValue < 0.2f ? 0.0f : blobValue;
                 
-                int blobState = floor(((float)((int)bassRow % 16)) / 4.0);
+                int blobState = (int)floor(((float)((int)bassRow % 16)) / 4.0);
                 float blobGlow = 0.0f;
                 if(rand() % 4 == blobState) {
-                    blobGlow = bassRow / 4.0;
-                    blobGlow = 1.0 - (blobGlow - floor(blobGlow));
+                    blobGlow = bassRow / 4.0f;
+                    blobGlow = 1.0f - (blobGlow - floor(blobGlow));
                     blobGlow = fmax(0.0f, blobGlow);
                 }
             
@@ -240,10 +260,56 @@ void effectBlobsRender() {
 
     glDrawArrays(GL_TRIANGLES, 0, 36 * BLOB_EXTENT * BLOB_EXTENT * BLOB_EXTENT);
     
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // Do postproc
+    glm::vec2 resolution = glm::vec2(screenWidth, screenHeight);
     glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);    
-    renderSAQ(postprocTexture);
+    for(int i = 0; i < 10; i++) {
+        glBindFramebuffer(GL_FRAMEBUFFER, postprocFBOB);
+
+        glActiveTexture(GL_TEXTURE0);
+        if (i == 0) {
+            glBindTexture(GL_TEXTURE_2D, postprocTextureInitial);
+        }
+        else {
+            glBindTexture(GL_TEXTURE_2D, postprocTextureA);
+        }
+
+        glUseProgram(blurShaderProgram);
+        glUniform2f(glGetUniformLocation(blurShaderProgram, "resolution"), screenWidth, screenHeight);
+        glUniform2f(glGetUniformLocation(blurShaderProgram, "direction"), 0.0, 1.0);
+        glUniform1i(glGetUniformLocation(blurShaderProgram, "tex"), 0);
+
+        renderSAQ(blurShaderProgram);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, postprocFBOA);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, postprocTextureB);
+
+        glUseProgram(blurShaderProgram);
+        glUniform1i(glGetUniformLocation(blurShaderProgram, "tex"), 0);
+        glUniform2f(glGetUniformLocation(blurShaderProgram, "resolution"), screenWidth, screenHeight);
+        glUniform2f(glGetUniformLocation(blurShaderProgram, "direction"), 1.0, 0.0);
+
+        renderSAQ(blurShaderProgram);
+    }
+
+    // Draw postproc quad to actual framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, postprocTextureInitial);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, postprocTextureA);
+
+    glUseProgram(composeShaderProgram);
+    glUniform1i(glGetUniformLocation(composeShaderProgram, "baseTex"), 0);
+    glUniform1i(glGetUniformLocation(composeShaderProgram, "glowTex"), 1);
+
+    renderSAQ(composeShaderProgram);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void effectBlobsTerminate() {
