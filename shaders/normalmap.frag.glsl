@@ -20,23 +20,24 @@ void main() {
 
     // Sample texture for base color
     vec4 colIn = texture(textureCol, texcoords);
-    vec3 normal = texture(textureNorm, texcoords).xzy;
-    normal = normalize(normal - vec3(0.5f));
+    vec3 normal = normalize(texture(textureNorm, texcoords).xzy - vec3(0.5f));
+    normal = normalize((normalview * vec4(normal, 0.0f)).xyz);
 
     // Point light
-    vec3 lightPos = vec3(0.0f, 1.0f, 0.0f);
-    float lightDist = length(lightPos);
-    vec3 lightDir = lightPos / lightDist;
-    float attenuate = (1.0f + 1.0f * pow(lightDist, 2.0f));
+    vec3 lightPos = (modelview * vec4(0.0f, 10.0f, 0.0f, 1.0f)).xyz;
+    vec3 lightVec = lightPos - worldPos;
+    float lightDist = length(lightVec);
+    vec3 lightDir = lightVec / lightDist;
+    float attenuate = (1.0f + 0.01f * pow(lightDist, 2.0f));
 
-    float lambert = max(0.0f, dot(lightDir, normal)) * 0.2f;
+    float lambert = max(0.0f, dot(lightDir, normal));
     lambert = lambert / attenuate;
 
     vec3 refLightDir = reflect(-lightDir, normal);
-    vec4 eye = inverse(modelview) * vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    vec3 eyeDir = normalize(eye.xyz - objectPos);
+    vec3 eyeDir = normalize(-worldPos);
 
     float phong = pow(max(dot(refLightDir, eyeDir), 0.0f), 40.0f);
+    phong = phong / attenuate;
 
-    outColor = vec4(colIn.xyz * lambert, 1.0) + vec4(phong / attenuate);
+    outColor = vec4(colIn.xyz * lambert, 1.0) + vec4(phong);
 }

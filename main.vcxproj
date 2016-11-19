@@ -121,6 +121,7 @@
     <ClCompile Include="glad.cpp" />
     <ClCompile Include="glhelpers.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="objloader.cpp" />
     <ClCompile Include="rocket\device.c" />
     <ClCompile Include="rocket\track.c" />
   </ItemGroup>
@@ -130,6 +131,7 @@
     <ClInclude Include="glad.h" />
     <ClInclude Include="glhelpers.h" />
     <ClInclude Include="main.h" />
+    <ClInclude Include="objloader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
