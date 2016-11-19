@@ -124,7 +124,7 @@ void cubeAt(vertexInfo* buffer, glm::vec3 at, glm::vec3 size, float glow) {
 
 void effectBlobsInitialize() {
     // Basic OpenGL state
-    glClearColor(0.2f, 0.1f, 0.3f, 1.0f);
+    glClearColor(0.15f, 0.15f, 0.15f, 0.0f);
     
     // Cube drawing shader
     GLuint vertexShader = loadShader(GL_VERTEX_SHADER, "shaders/glowy_blobs.vert.glsl");
@@ -225,34 +225,7 @@ void effectBlobsRender() {
     glm::mat4 normalviewMirrored = glm::transpose(glm::inverse(modelviewMirrored));
     glm::mat4 normalviewCamera = glm::transpose(glm::inverse(cameraTransform));
 
-    // Draw the floor
-    glCullFace(GL_BACK);
-    glDepthMask(GL_FALSE);
-    glUseProgram(floorShaderProgram);
-
-    glUniformMatrix4fv(glGetUniformLocation(floorShaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-    glUniformMatrix4fv(glGetUniformLocation(floorShaderProgram, "modelview"), 1, GL_FALSE, glm::value_ptr(cameraTransform));
-    glUniformMatrix4fv(glGetUniformLocation(floorShaderProgram, "normalview"), 1, GL_FALSE, glm::value_ptr(normalviewCamera));
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, brickTexture);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, brickNormalTexture);
-
-    glUniform1i(glGetUniformLocation(floorShaderProgram, "textureCol"), 0);
-    glUniform1i(glGetUniformLocation(floorShaderProgram, "textureNorm"), 1);
-
-    glBindBuffer(GL_ARRAY_BUFFER, floorBO);
-
-    GLuint floorVertexInLoc =  glGetAttribLocation(floorShaderProgram, "vertexIn");
-    glEnableVertexAttribArray(floorVertexInLoc);
-    glVertexAttribPointer(floorVertexInLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)(sizeof(float) * 0));
-
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-
     // Bind cube shader and set up uniforms
-    glDepthMask(GL_TRUE);
     glUseProgram(shaderProgram);
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix4fv(modelviewLoc, 1, GL_FALSE, glm::value_ptr(modelview));
@@ -324,9 +297,7 @@ void effectBlobsRender() {
 
     glDrawArrays(GL_TRIANGLES, 0, 36 * BLOB_EXTENT * BLOB_EXTENT * BLOB_EXTENT);
     
-    // Draw the same again but mirrored and blended (TODO: This makes ths cubes translucent which was Not Intended and looks weird)
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // Draw the same again but mirrored
     glCullFace(GL_FRONT);
     glUniformMatrix4fv(modelviewLoc, 1, GL_FALSE, glm::value_ptr(modelviewMirrored));
     glUniformMatrix4fv(normalviewLoc, 1, GL_FALSE, glm::value_ptr(normalviewMirrored));
@@ -336,10 +307,38 @@ void effectBlobsRender() {
     glDisableVertexAttribArray(normalInLoc);
     glDisableVertexAttribArray(texcoordsInLoc);
     glDisableVertexAttribArray(blobglowInLoc);
+
+    // Draw the floor and blend
+    glCullFace(GL_BACK);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_DST_ALPHA);
+
+    glCullFace(GL_BACK);
+    glUseProgram(floorShaderProgram);
+
+    glUniformMatrix4fv(glGetUniformLocation(floorShaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(glGetUniformLocation(floorShaderProgram, "modelview"), 1, GL_FALSE, glm::value_ptr(cameraTransform));
+    glUniformMatrix4fv(glGetUniformLocation(floorShaderProgram, "normalview"), 1, GL_FALSE, glm::value_ptr(normalviewCamera));
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, brickTexture);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, brickNormalTexture);
+
+    glUniform1i(glGetUniformLocation(floorShaderProgram, "textureCol"), 0);
+    glUniform1i(glGetUniformLocation(floorShaderProgram, "textureNorm"), 1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, floorBO);
+
+    GLuint floorVertexInLoc =  glGetAttribLocation(floorShaderProgram, "vertexIn");
+    glEnableVertexAttribArray(floorVertexInLoc);
+    glVertexAttribPointer(floorVertexInLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)(sizeof(float) * 0));
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
     glDisable(GL_BLEND);
 
     // Do postproc
-    glCullFace(GL_BACK);
     glm::vec2 resolution = glm::vec2(screenWidth, screenHeight);
     glDisable(GL_DEPTH_TEST);
     for(int i = 0; i < 10; i++) {
