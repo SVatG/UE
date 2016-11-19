@@ -4,9 +4,11 @@
 #define BLOB_COUNT 3
 
 static GLuint shaderProgram;
+static GLuint floorShaderProgram;
 static GLuint blurShaderProgram;
 static GLuint composeShaderProgram;
-static GLuint quadBO;
+static GLuint cubesBO;
+static GLuint floorBO;
 
 static GLuint projectionLoc;
 static GLuint modelviewLoc;
@@ -22,6 +24,8 @@ static const sync_track* camRotY;
 static const sync_track* camRotZ;
 
 static GLuint glowyTexture;
+static GLuint brickTexture;
+static GLuint brickNormalTexture;
 
 static GLuint postprocTextureInitial;
 static GLuint postprocFBOInitial;
@@ -50,7 +54,7 @@ typedef struct vertexInfo {
 static vertexInfo* blobVertices;
 
 // Too-lazy-for-element-buffer quads
-vertexInfo cube[] = {
+vertexInfo cubeVertices[] = {
     // Front
     {{-1, -1,  1}, {0, 0,  1}, {0, 0}, 1.0},
     {{ 1, -1,  1}, {0, 0,  1}, {1, 0}, 1.0},
@@ -100,9 +104,18 @@ vertexInfo cube[] = {
     {{ 1,  1,  1}, { 0, 1, 0}, {1, 1}, 0.0},
 };
 
+float planeVertices[] = {
+    -1000, 0, -1000,
+    -1000, 0,  1000,
+     1000, 0, -1000,
+     1000, 0, -1000,
+    -1000, 0,  1000,
+     1000, 0,  1000,
+};
+
 void cubeAt(vertexInfo* buffer, glm::vec3 at, glm::vec3 size, float glow) {
     for(int i = 0; i < 36; i++) {
-        vertexInfo cubeVert = cube[i];
+        vertexInfo cubeVert = cubeVertices[i];
         cubeVert.pos = cubeVert.pos * size + at;
         cubeVert.glow = glow;
         buffer[i] = cubeVert;
@@ -113,10 +126,17 @@ void effectBlobsInitialize() {
     // Basic OpenGL state
     glClearColor(0.2f, 0.1f, 0.3f, 1.0f);
     
-    // A shader
+    // Cube drawing shader
     GLuint vertexShader = loadShader(GL_VERTEX_SHADER, "shaders/glowy_blobs.vert.glsl");
     GLuint fragmentShader = loadShader(GL_FRAGMENT_SHADER, "shaders/glowy_blobs_lighting.frag.glsl");
     shaderProgram = makeShaderProgram(fragmentShader, vertexShader);
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    // Floor drawing shader
+    vertexShader = loadShader(GL_VERTEX_SHADER, "shaders/basic.vert.glsl");
+    fragmentShader = loadShader(GL_FRAGMENT_SHADER, "shaders/normalmap.frag.glsl");
+    floorShaderProgram = makeShaderProgram(fragmentShader, vertexShader);
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
@@ -137,7 +157,8 @@ void effectBlobsInitialize() {
     
     // Geometry
     blobVertices = (vertexInfo*)malloc(sizeof(vertexInfo) * 36 * BLOB_EXTENT * BLOB_EXTENT * BLOB_EXTENT);
-    quadBO = makeBO(GL_ARRAY_BUFFER, blobVertices, sizeof(vertexInfo) * 36 * BLOB_EXTENT * BLOB_EXTENT * BLOB_EXTENT, GL_DYNAMIC_DRAW);
+    cubesBO = makeBO(GL_ARRAY_BUFFER, blobVertices, sizeof(vertexInfo) * 36 * BLOB_EXTENT * BLOB_EXTENT * BLOB_EXTENT, GL_DYNAMIC_DRAW);
+    floorBO = makeBO(GL_ARRAY_BUFFER, planeVertices, sizeof(float) * 6 * 3, GL_STATIC_DRAW);
 
     // Sync
     camRotX = sync_get_track(rocket, "blobs:rot.x");
@@ -150,6 +171,8 @@ void effectBlobsInitialize() {
     
     // Textures
     glowyTexture = loadTexture("texture/glowy.tga");
+    brickTexture = loadTexture("texture/bricks_colour.tga");
+    brickNormalTexture = loadTexture("texture/bricks_normals.tga");
 
     postprocTextureInitial = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA, GL_RGBA);
     postprocFBOInitial = makeFBO(postprocTextureInitial);
@@ -180,15 +203,57 @@ void effectBlobsRender() {
     glCullFace(GL_BACK);
     
     float bassRow = (float)bassGetRow(stream);
-
-    // Bind shader and set up uniforms
-    glUseProgram(shaderProgram);
     
+    // Standard perspective projection
     glm::mat4 projection = glm::perspective(90.0f, (float)screenWidth / (float)screenHeight, 0.1f, 50.0f);
-    glm::mat4 modelview = glm::lookAt(glm::vec3(0.0f, 0.0f, -20.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0, 1.0, 0.0));
-    modelview *= (glm::mat4)glm::quat(glm::vec3(sync_get_val(camRotX, bassRow), sync_get_val(camRotY, bassRow), sync_get_val(camRotZ, bassRow))); 
+
+    // Modelview shifts scene up and into the frame
+    glm::mat4 modelview = glm::translate(glm::vec3(0.0f, 11.0f, 0.0f));
+
+    // Calculate matrix for mirroring along the xz plane
+    glm::mat4 modelviewMirrored = modelview;
+    modelviewMirrored[1][1] = -modelviewMirrored[1][1];
+    modelviewMirrored[3][1] = -modelviewMirrored[3][1];
+
+    // Camera transform
+    glm::mat4 cameraTransform = glm::translate(glm::vec3(0.0f, 0.0f, -25.0f)) * (glm::mat4)glm::quat(glm::vec3(sync_get_val(camRotX, bassRow), sync_get_val(camRotY, bassRow), sync_get_val(camRotZ, bassRow)));
+    modelview = cameraTransform * modelview;
+    modelviewMirrored = cameraTransform * modelviewMirrored;
+
+    // Normalview -> Inverse transpose
     glm::mat4 normalview = glm::transpose(glm::inverse(modelview));
-    
+    glm::mat4 normalviewMirrored = glm::transpose(glm::inverse(modelviewMirrored));
+    glm::mat4 normalviewCamera = glm::transpose(glm::inverse(cameraTransform));
+
+    // Draw the floor
+    glCullFace(GL_BACK);
+    glDepthMask(GL_FALSE);
+    glUseProgram(floorShaderProgram);
+
+    glUniformMatrix4fv(glGetUniformLocation(floorShaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(glGetUniformLocation(floorShaderProgram, "modelview"), 1, GL_FALSE, glm::value_ptr(cameraTransform));
+    glUniformMatrix4fv(glGetUniformLocation(floorShaderProgram, "normalview"), 1, GL_FALSE, glm::value_ptr(normalviewCamera));
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, brickTexture);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, brickNormalTexture);
+
+    glUniform1i(glGetUniformLocation(floorShaderProgram, "textureCol"), 0);
+    glUniform1i(glGetUniformLocation(floorShaderProgram, "textureNorm"), 1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, floorBO);
+
+    GLuint floorVertexInLoc =  glGetAttribLocation(floorShaderProgram, "vertexIn");
+    glEnableVertexAttribArray(floorVertexInLoc);
+    glVertexAttribPointer(floorVertexInLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)(sizeof(float) * 0));
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    // Bind cube shader and set up uniforms
+    glDepthMask(GL_TRUE);
+    glUseProgram(shaderProgram);
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix4fv(modelviewLoc, 1, GL_FALSE, glm::value_ptr(modelview));
     glUniformMatrix4fv(normalviewLoc, 1, GL_FALSE, glm::value_ptr(normalview));
@@ -241,8 +306,8 @@ void effectBlobsRender() {
     glActiveTexture(GL_TEXTURE0);  
     glBindTexture(GL_TEXTURE_2D, glowyTexture);
     
-    // Bind buffers and draw
-    glBindBuffer(GL_ARRAY_BUFFER, quadBO);
+    // Bind buffers and draw main thing
+    glBindBuffer(GL_ARRAY_BUFFER, cubesBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertexInfo) * 36 * BLOB_EXTENT * BLOB_EXTENT * BLOB_EXTENT, blobVertices, GL_DYNAMIC_DRAW);
 
     glEnableVertexAttribArray(vertexInLoc);
@@ -257,10 +322,24 @@ void effectBlobsRender() {
     glEnableVertexAttribArray(blobglowInLoc);
     glVertexAttribPointer(blobglowInLoc, 1, GL_FLOAT, GL_FALSE, sizeof(vertexInfo), (void*)(sizeof(float) * 8));
 
-
     glDrawArrays(GL_TRIANGLES, 0, 36 * BLOB_EXTENT * BLOB_EXTENT * BLOB_EXTENT);
     
+    // Draw the same again but mirrored and blended (TODO: This makes ths cubes translucent which was Not Intended and looks weird)
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glCullFace(GL_FRONT);
+    glUniformMatrix4fv(modelviewLoc, 1, GL_FALSE, glm::value_ptr(modelviewMirrored));
+    glUniformMatrix4fv(normalviewLoc, 1, GL_FALSE, glm::value_ptr(normalviewMirrored));
+    glDrawArrays(GL_TRIANGLES, 0, 36 * BLOB_EXTENT * BLOB_EXTENT * BLOB_EXTENT);
+
+    glDisableVertexAttribArray(vertexInLoc);
+    glDisableVertexAttribArray(normalInLoc);
+    glDisableVertexAttribArray(texcoordsInLoc);
+    glDisableVertexAttribArray(blobglowInLoc);
+    glDisable(GL_BLEND);
+
     // Do postproc
+    glCullFace(GL_BACK);
     glm::vec2 resolution = glm::vec2(screenWidth, screenHeight);
     glDisable(GL_DEPTH_TEST);
     for(int i = 0; i < 10; i++) {
@@ -275,7 +354,7 @@ void effectBlobsRender() {
         }
 
         glUseProgram(blurShaderProgram);
-        glUniform2f(glGetUniformLocation(blurShaderProgram, "resolution"), screenWidth, screenHeight);
+        glUniform2f(glGetUniformLocation(blurShaderProgram, "resolution"), (float)screenWidth, (float)screenHeight);
         glUniform2f(glGetUniformLocation(blurShaderProgram, "direction"), 0.0, 1.0);
         glUniform1i(glGetUniformLocation(blurShaderProgram, "tex"), 0);
 
@@ -313,8 +392,22 @@ void effectBlobsRender() {
 }
 
 void effectBlobsTerminate() {
+    // Textures
+    glDeleteTextures(1, &brickTexture);
+    glDeleteTextures(1, &brickNormalTexture);
     glDeleteTextures(1, &glowyTexture);
-    free(blobVertices);
-    glDeleteBuffers(1, &quadBO);
+   
+    // VBOs
+    glDeleteBuffers(1, &cubesBO);
+    glDeleteBuffers(1, &floorBO);
+
+    // Shaders
     glDeleteProgram(shaderProgram);
+    glDeleteProgram(blurShaderProgram);
+    glDeleteProgram(composeShaderProgram);
+
+    // TODO FBOS
+
+    // Other data
+    free(blobVertices);
 }

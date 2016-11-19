@@ -7,7 +7,7 @@
 #include <stdlib.h>  
 #include <cmath>
 
-static const bool syncClient = true;
+static const bool syncClient = false;
 
 // Configure your song
 static const float bpm = 125.0; /* beats per minute */

@@ -139,6 +139,7 @@
     <None Include="shaders\glowy_blobs.vert.glsl" />
     <None Include="shaders\glowy_blobs_lighting.frag.glsl" />
     <None Include="shaders\glow_compose.frag.glsl" />
+    <None Include="shaders\normalmap.frag.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

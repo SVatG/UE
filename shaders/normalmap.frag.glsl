@@ -1,30 +1,29 @@
 #version 150 core
 
-// Simple fragment shader.
-// Does texturing and diffuse shading with a fixed-direction sun.
+// Fragment shader that uses a normal map
 
 // Input
 uniform sampler2D textureCol;
+uniform sampler2D textureNorm;
 
 // From vertex shader
 in vec3 objectPos;
 in vec3 worldPos;
-in vec3 normal;
-in vec2 texcoords;
-in float blobglow;
 
 // Output
 out vec4 outColor;
 
 void main() {
+    vec2 texcoords = objectPos.xz / 10.0f;
+
     // Sample texture for base color
     vec4 colIn = texture(textureCol, texcoords);
-    
+    vec3 normal = normalize((vec4(texture(textureNorm, texcoords).xyz, 0.0f)).xyz);
+
     // Sun is at infinity
     vec3 lightDir = vec3(1.0f, 1.0f, 1.0f);
     float lambert = max(0.0f, dot(normalize(lightDir), normal));
-    float light = min(lambert + 0.1f, 1.0f) * 0.5f;
+    float light = min(lambert + 0.1f, 1.0f);
 
-    float alpha = max(0.0f, abs(objectPos.y / 12.0f - 1.0f)) * 0.1;
-    outColor = vec4(colIn.xyz * light + colIn.xyz * (blobglow * 2.0f), alpha);
+    outColor = vec4(colIn.xyz * light * 0.2f, 1.0);
 }
