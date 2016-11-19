@@ -36,6 +36,8 @@ static GLuint houseTexture;
 static GLuint postprocTextureInitial;
 static GLuint postprocFBOInitial;
 
+static GLuint floorTexture;
+
 static GLuint postprocTextureA;
 static GLuint postprocFBOA;
 
@@ -142,7 +144,8 @@ void effectBlobsInitialize() {
     // Floor drawing shader
     vertexShader = loadShader(GL_VERTEX_SHADER, "shaders/basic.vert.glsl");
     fragmentShader = loadShader(GL_FRAGMENT_SHADER, "shaders/normalmap.frag.glsl");
-    floorShaderProgram = makeShaderProgram(fragmentShader, vertexShader);
+    const char* targets[] = {"outColor", "outFloor"};
+    floorShaderProgram = makeShaderProgramMRT(fragmentShader, vertexShader, targets, 2);
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
@@ -205,6 +208,9 @@ void effectBlobsInitialize() {
 
     postprocTextureInitial = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA, GL_RGBA);
     postprocFBOInitial = makeFBO(postprocTextureInitial);
+
+    floorTexture = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA, GL_RGBA);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, floorTexture, 0);
 
     postprocTextureA = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA, GL_RGBA);
     postprocFBOA = makeFBO(postprocTextureA);
@@ -372,7 +378,7 @@ void drawFloor(glm::mat4 projection, glm::mat4 cameraTransform, glm::mat4 normal
 
     glCullFace(GL_BACK);
     glUseProgram(floorShaderProgram);
-
+   
     glUniformMatrix4fv(glGetUniformLocation(floorShaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix4fv(glGetUniformLocation(floorShaderProgram, "modelview"), 1, GL_FALSE, glm::value_ptr(cameraTransform));
     glUniformMatrix4fv(glGetUniformLocation(floorShaderProgram, "normalview"), 1, GL_FALSE, glm::value_ptr(normalviewCamera));
@@ -400,7 +406,10 @@ void drawFloor(glm::mat4 projection, glm::mat4 cameraTransform, glm::mat4 normal
 // Actual effect
 void effectBlobsRender() {
     glBindFramebuffer(GL_FRAMEBUFFER, postprocFBOInitial);
-    
+
+    GLenum targets[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+    glDrawBuffers(2, targets);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -447,7 +456,7 @@ void effectBlobsRender() {
         }
     }
 
-    // Blend floor
+    // Draw and blend floor
     drawFloor(projection, cameraTransform,  normalviewCamera);
 
     // Do postproc
@@ -493,12 +502,26 @@ void effectBlobsRender() {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, postprocTextureA);
 
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, floorTexture);
+
     glUseProgram(composeShaderProgram);
     glUniform1i(glGetUniformLocation(composeShaderProgram, "baseTex"), 0);
     glUniform1i(glGetUniformLocation(composeShaderProgram, "glowTex"), 1);
+    glUniform1i(glGetUniformLocation(composeShaderProgram, "floorTex"), 2);
 
+    glUniformMatrix4fv(glGetUniformLocation(composeShaderProgram, "normalviewCamera"), 1, GL_FALSE, glm::value_ptr(normalviewCamera));
+    glUniform1f(glGetUniformLocation(composeShaderProgram, "bassRow"), bassRow);
+    
     renderSAQ(composeShaderProgram);
 
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 

@@ -14,6 +14,7 @@ in vec3 worldPos;
 
 // Output
 out vec4 outColor;
+out vec4 outFloor;
 
 void main() {
     vec2 texcoords = objectPos.xz / 10.0f;
@@ -40,4 +41,5 @@ void main() {
     phong = phong / attenuate;
 
     outColor = vec4(colIn.xyz * lambert, 1.0) + vec4(phong);
+    outFloor = vec4(1.0f);
 }

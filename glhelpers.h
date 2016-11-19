@@ -26,6 +26,7 @@ void renderSAQ(GLuint texture);
 GLuint loadShader(GLenum type, const char *file);
 GLuint buildShader(GLenum type, GLchar* shaderSrc);
 GLuint makeShaderProgram(GLuint vertexShader, GLuint fragmentShader);
+GLuint makeShaderProgramMRT(GLuint vertexShader, GLuint fragmentShader, const char** targets, int numTargets);
 GLuint buildSaqShaderProgram(GLchar* saqFSSource);
 GLuint loadSaqShaderProgram(const char* file);
 

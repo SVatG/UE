@@ -193,6 +193,34 @@ GLuint makeShaderProgram(GLuint vertexShader, GLuint fragmentShader) {
     return program;
 }
 
+// Link a vertex shader and a fragment shader into a shader program, attach several rendertargets
+GLuint makeShaderProgramMRT(GLuint vertexShader, GLuint fragmentShader, const char** targets, int numTargets) {
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vertexShader);
+    glAttachShader(program, fragmentShader);
+
+    // Bind colour outputs
+    for(int i = 0; i < numTargets; i++) {
+        glBindFragDataLocation(program, i, targets[i]);
+    }
+
+    glLinkProgram(program);
+
+    // Check for failure, display errors.
+    GLint status;
+    glGetProgramiv(program, GL_LINK_STATUS, &status);
+    if (status == 0) {
+        fprintf(stderr, "Shader link error.\n");
+        char log[65536];
+        glGetProgramInfoLog(program, 65535, &status, log);
+        fprintf(stderr, "%s", log);
+        fgetc(stdin);
+        exit(-1);
+    }
+
+    return program;
+}
+
 static short le_short(unsigned char *bytes) {
     return bytes[0] | ((char)bytes[1] << 8);
 }
