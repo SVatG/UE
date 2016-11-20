@@ -118,6 +118,7 @@
   <ItemGroup>
     <ClCompile Include="bass_rocket.cpp" />
     <ClCompile Include="effect_blobs.cpp" />
+    <ClCompile Include="effect_trithing.cpp" />
     <ClCompile Include="glad.cpp" />
     <ClCompile Include="glhelpers.cpp" />
     <ClCompile Include="main.cpp" />
@@ -142,6 +143,8 @@
     <None Include="shaders\glowy_blobs_lighting.frag.glsl" />
     <None Include="shaders\glow_compose.frag.glsl" />
     <None Include="shaders\normalmap.frag.glsl" />
+    <None Include="shaders\trithing_background.frag.glsl" />
+    <None Include="shaders\trithing_compose.frag.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

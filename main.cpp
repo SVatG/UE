@@ -67,7 +67,8 @@ int main() {
     BASS_Start();
     BASS_ChannelPlay(stream, false);
 
-    effectBlobsInitialize();
+    //effectBlobsInitialize();
+    effectTrithingInitialize();
 
     // Demo main loop
     while (!glfwWindowShouldClose(window)) {
@@ -75,7 +76,8 @@ int main() {
         syncUpdate(rocket, stream);
 
         // Test effect
-        effectBlobsRender();
+        //effectBlobsRender();
+        effectTrithingRender();
 
         // Draw to screen
         glfwSwapBuffers(window);
@@ -84,7 +86,8 @@ int main() {
         glfwPollEvents();
     }
     
-    effectBlobsTerminate();
+    //effectBlobsTerminate();
+    effectTrithingTerminate();
 
     terminateApplication();
 }
