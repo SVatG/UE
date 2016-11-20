@@ -33,14 +33,16 @@ void main() {
     vec4 glowCol = texture2D(glowTex, noiseTexcoord);
     outColor = (texture2D(baseTex, noiseTexcoord) + glowCol) * vignette;
 
-    vec2 rainDir = normalize((normalviewCamera * vec4(0.0f, 1.0f, 0.0f, 0.0f)).xy);
+    vec2 rainDir = (normalviewCamera * vec4(0.0f, 1.0f, 0.0f, 0.0f)).xy;
+    float rainLen = length(rainDir);
+    rainDir = rainDir / rainLen;
     float rainAngle = rainDir.x;
     mat2 rainRot = mat2(
             cos(rainAngle), -sin(rainAngle),
             sin(rainAngle),  cos(rainAngle)
     );
     vec2 rainCoord = coords * rainRot;
-    rainCoord = rainCoord * vec2(300.0f, 5.0f) + vec2(0.0f, bassRow * 10.0f);
+    rainCoord = rainCoord * vec2(300.0f, 5.0f / rainLen) + vec2(0.0f, bassRow * 10.0f);
     float rainfall = pow(noise(rainCoord), 20.0f) * 0.1f;
     outColor += vec4(rainfall) + glowCol * pow(rainfall, 0.3f);
 }
