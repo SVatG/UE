@@ -145,6 +145,8 @@
     <None Include="shaders\normalmap.frag.glsl" />
     <None Include="shaders\trithing_background.frag.glsl" />
     <None Include="shaders\trithing_compose.frag.glsl" />
+    <None Include="shaders\trithing_shade.frag.glsl" />
+    <None Include="shaders\trithing_transform.vert.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

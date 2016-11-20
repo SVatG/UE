@@ -73,6 +73,118 @@
 			<key interpolation="2" row="256" value="2"/>
 			<key interpolation="0" row="288" value="10"/>
 		</track>
+		<track name="trithing:lightUp">
+			<key interpolation="0" row="0" value="1"/>
+			<key interpolation="0" row="5" value="10"/>
+			<key interpolation="0" row="11" value="15"/>
+			<key interpolation="0" row="16" value="20"/>
+			<key interpolation="0" row="21" value="14"/>
+		</track>
+		<track name="trithing:scale.outer">
+			<key interpolation="0" row="0" value="0"/>
+			<key interpolation="2" row="67" value="0"/>
+			<key interpolation="2" row="68" value="6"/>
+			<key interpolation="0" row="69" value="0"/>
+			<key interpolation="2" row="75" value="0"/>
+			<key interpolation="2" row="76" value="6"/>
+			<key interpolation="0" row="77" value="0"/>
+			<key interpolation="2" row="83" value="0"/>
+			<key interpolation="2" row="84" value="6"/>
+			<key interpolation="0" row="85" value="0"/>
+			<key interpolation="2" row="91" value="0"/>
+			<key interpolation="2" row="92" value="6"/>
+			<key interpolation="0" row="93" value="0"/>
+			<key interpolation="2" row="99" value="0"/>
+			<key interpolation="2" row="100" value="6"/>
+			<key interpolation="0" row="101" value="0"/>
+			<key interpolation="2" row="107" value="0"/>
+			<key interpolation="2" row="108" value="6"/>
+			<key interpolation="0" row="109" value="0"/>
+			<key interpolation="2" row="115" value="0"/>
+			<key interpolation="2" row="116" value="6"/>
+			<key interpolation="0" row="117" value="0"/>
+			<key interpolation="2" row="123" value="0"/>
+			<key interpolation="2" row="124" value="6"/>
+			<key interpolation="0" row="125" value="0"/>
+		</track>
+		<track name="trithing:scale.middle">
+			<key interpolation="0" row="0" value="0"/>
+			<key interpolation="2" row="3" value="0"/>
+			<key interpolation="2" row="4" value="4"/>
+			<key interpolation="0" row="5" value="0"/>
+			<key interpolation="2" row="11" value="0"/>
+			<key interpolation="2" row="12" value="4"/>
+			<key interpolation="0" row="13" value="0"/>
+			<key interpolation="2" row="19" value="0"/>
+			<key interpolation="2" row="20" value="4"/>
+			<key interpolation="0" row="21" value="0"/>
+			<key interpolation="2" row="27" value="0"/>
+			<key interpolation="2" row="28" value="4"/>
+			<key interpolation="0" row="29" value="0"/>
+			<key interpolation="2" row="35" value="0"/>
+			<key interpolation="2" row="36" value="4"/>
+			<key interpolation="0" row="37" value="0"/>
+			<key interpolation="2" row="43" value="0"/>
+			<key interpolation="2" row="44" value="4"/>
+			<key interpolation="0" row="45" value="0"/>
+			<key interpolation="2" row="51" value="0"/>
+			<key interpolation="2" row="52" value="4"/>
+			<key interpolation="0" row="53" value="0"/>
+			<key interpolation="2" row="59" value="0"/>
+			<key interpolation="2" row="60" value="4"/>
+			<key interpolation="0" row="61" value="0"/>
+			<key interpolation="2" row="67" value="0"/>
+			<key interpolation="2" row="68" value="4"/>
+			<key interpolation="0" row="69" value="0"/>
+			<key interpolation="2" row="75" value="0"/>
+			<key interpolation="2" row="76" value="4"/>
+			<key interpolation="0" row="77" value="0"/>
+			<key interpolation="2" row="83" value="0"/>
+			<key interpolation="2" row="84" value="4"/>
+			<key interpolation="0" row="85" value="0"/>
+			<key interpolation="2" row="91" value="0"/>
+			<key interpolation="2" row="92" value="4"/>
+			<key interpolation="0" row="93" value="0"/>
+			<key interpolation="2" row="99" value="0"/>
+			<key interpolation="2" row="100" value="4"/>
+			<key interpolation="0" row="101" value="0"/>
+			<key interpolation="2" row="107" value="0"/>
+			<key interpolation="2" row="108" value="4"/>
+			<key interpolation="0" row="109" value="0"/>
+			<key interpolation="2" row="115" value="0"/>
+			<key interpolation="2" row="116" value="4"/>
+			<key interpolation="0" row="117" value="0"/>
+			<key interpolation="2" row="123" value="0"/>
+			<key interpolation="2" row="124" value="4"/>
+			<key interpolation="0" row="125" value="0"/>
+		</track>
+		<track name="trithing:scale.inner">
+			<key interpolation="0" row="0" value="0"/>
+			<key interpolation="2" row="3" value="0"/>
+			<key interpolation="2" row="4" value="6"/>
+			<key interpolation="0" row="5" value="0"/>
+			<key interpolation="2" row="11" value="0"/>
+			<key interpolation="2" row="12" value="6"/>
+			<key interpolation="0" row="13" value="0"/>
+			<key interpolation="2" row="19" value="0"/>
+			<key interpolation="2" row="20" value="6"/>
+			<key interpolation="0" row="21" value="0"/>
+			<key interpolation="2" row="27" value="0"/>
+			<key interpolation="2" row="28" value="6"/>
+			<key interpolation="0" row="29" value="0"/>
+			<key interpolation="2" row="35" value="0"/>
+			<key interpolation="2" row="36" value="6"/>
+			<key interpolation="0" row="37" value="0"/>
+			<key interpolation="2" row="43" value="0"/>
+			<key interpolation="2" row="44" value="6"/>
+			<key interpolation="0" row="45" value="0"/>
+			<key interpolation="2" row="51" value="0"/>
+			<key interpolation="2" row="52" value="6"/>
+			<key interpolation="0" row="53" value="0"/>
+			<key interpolation="2" row="59" value="0"/>
+			<key interpolation="2" row="60" value="6"/>
+			<key interpolation="0" row="61" value="0"/>
+		</track>
 	</tracks>
 	<bookmarks/>
 </sync>
