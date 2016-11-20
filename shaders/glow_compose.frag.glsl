@@ -26,7 +26,7 @@ float noise(in vec2 x ) {
 
 void main() {
     vec2 coords = (texcoord - vec2(0.5f)) * 2.0f;
-    float floor = texture2D(floorTex, texcoord).a;
+    float floor = texture2D(floorTex, texcoord).a > 0.7f ? 1.0f : 0.0f;
     vec2 noiseTexcoord = texcoord + noise(coords * 1000000.0f + vec2(bassRow)) * 0.005f * floor;
 
     float vignette = max(0.0f, 0.9f - pow(length(coords / 2.0f), 0.8f));
@@ -42,5 +42,5 @@ void main() {
     vec2 rainCoord = coords * rainRot;
     rainCoord = rainCoord * vec2(300.0f, 5.0f) + vec2(0.0f, bassRow * 10.0f);
     float rainfall = pow(noise(rainCoord), 20.0f) * 0.1f;
-    outColor += vec4(rainfall) + glowCol * pow(rainfall, 2.0f);
+    outColor += vec4(rainfall) + glowCol * pow(rainfall, 0.3f);
 }
