@@ -21,6 +21,8 @@ OBJECTS=\
 	glad.o\
 	glhelpers.o\
 	effect_blobs.o \
+	effect_trithing.o \
+	objloader.o \
 	rocket/device.o \
 	rocket/track.o \
 	bass_rocket.o
