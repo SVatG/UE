@@ -8,7 +8,12 @@
 #include <stdlib.h>  
 #include <cmath>
 
+#define CAN_SWITCH_SYNCMODE 1
+#ifdef CAN_SWITCH_SYNCMODE
+static bool syncClient = true;
+#else
 static const bool syncClient = true;
+#endif
 
 // Configure your song
 static const float bpm = 125.0; /* beats per minute */
@@ -56,7 +61,12 @@ sync_device* syncStartup() {
     if(syncClient) {
         if (sync_tcp_connect(rocket, "localhost", SYNC_DEFAULT_PORT)) {
             std::cerr << "Started in client mode, but could not connect to editor!" << std::endl;
+#ifdef CAN_SWITCH_SYNCMODE
+            std::cerr << "Switching to non-client mode." << std::endl;
+            syncClient = false;
+#else
             exit(-1);
+#endif
         }
     }
 
