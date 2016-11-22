@@ -19,7 +19,7 @@ float randFloatUnit();
 GLuint genFloatTexture(float *data, int width, int height);
 
 GLuint makeBO(GLenum type, void* data, GLsizei size, int accessFlags);
-GLuint makeTextureBuffer(int w, int h, GLenum format, GLint internalFormat);
+GLuint makeTextureBuffer(int w, int h, GLint internalFormat);
 GLuint makeFBO(GLuint texture);
 void renderSAQ(GLuint texture);
 

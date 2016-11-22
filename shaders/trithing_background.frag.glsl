@@ -44,7 +44,7 @@ void main() {
     }
     else{
         if(currentSegment == floor(mod(lightUp, maxSegments))) {
-            outColor = lightUpCol;
+            outColor = lightUpCol * 2.0f;
         }
     }
 

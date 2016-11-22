@@ -38,4 +38,8 @@ vec3 hexablur(sampler2D tex, vec2 uv) {
 void main() {
     float curLine = floor(mod(texcoord.y * 720.0f, 4.0f) < 3.0f ? 0.0f : 1.0f);
     outColor = vec4(hexablur(baseTex, texcoord) * (curLine / 2.0f + 0.5f), 1.0f);
+
+    // Tonemap, gamma
+    outColor = outColor / (outColor + vec4(1.0));
+
 }

@@ -26,7 +26,7 @@ void main() {
     worldPos = viewVertex.xyz;
 
     // Transform normal to world space
-    normal = (normalview * vec4(normalIn, 0.0)).xyz;
+    normal = normalize((normalview * vec4(normalIn, 0.0)).xyz);
 
     // Project and send to the fragment shader
     gl_Position = projection * viewVertex;

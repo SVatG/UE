@@ -34,7 +34,7 @@ GLuint makeBO(GLenum type, void* data, GLsizei size, int accessFlags) {
 }
 
 // Helper function to make a buffer object of some size
-GLuint makeTextureBuffer(int w, int h, GLenum format, GLint internalFormat) {
+GLuint makeTextureBuffer(int w, int h, GLint internalFormat) {
     GLuint buffertex;
 
     glGenTextures(1, &buffertex);
@@ -44,7 +44,7 @@ GLuint makeTextureBuffer(int w, int h, GLenum format, GLint internalFormat) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);    
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0, format, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
     
     return buffertex;
 }

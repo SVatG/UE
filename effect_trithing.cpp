@@ -72,7 +72,7 @@ void effectTrithingInitialize() {
     glDeleteShader(fragmentShader);
 
     // FBOs
-    renderTexture = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA, GL_RGBA);
+    renderTexture = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA32F);
     renderFBO = makeFBO(renderTexture);
 
     // Geometry
@@ -155,6 +155,7 @@ void effectTrithingRender() {
         glUniformMatrix4fv(glGetUniformLocation(trithingShaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(glGetUniformLocation(trithingShaderProgram, "modelview"), 1, GL_FALSE, glm::value_ptr(modelview));
         glUniformMatrix4fv(glGetUniformLocation(trithingShaderProgram, "normalview"), 1, GL_FALSE, glm::value_ptr(normalview));
+        glUniformMatrix4fv(glGetUniformLocation(trithingShaderProgram, "cameraTransform"), 1, GL_FALSE, glm::value_ptr(normalview));
 
         float shade = 0.5f + (float)i / 7.0f;
         glUniform4f(glGetUniformLocation(trithingShaderProgram, "color"), shade, shade, shade, 1.0f);

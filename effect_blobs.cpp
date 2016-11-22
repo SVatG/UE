@@ -206,16 +206,16 @@ void effectBlobsInitialize() {
     brickNormalTexture = loadTexture("texture/bricks_normals.tga");
     houseTexture = loadTexture("texture/house2.tga");
 
-    postprocTextureInitial = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA, GL_RGBA);
+    postprocTextureInitial = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA32F);
     postprocFBOInitial = makeFBO(postprocTextureInitial);
 
-    floorTexture = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA, GL_RGBA);
+    floorTexture = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA32F);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, floorTexture, 0);
 
-    postprocTextureA = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA, GL_RGBA);
+    postprocTextureA = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA32F);
     postprocFBOA = makeFBO(postprocTextureA);
 
-    postprocTextureB = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA, GL_RGBA);
+    postprocTextureB = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA32F);
     postprocFBOB = makeFBO(postprocTextureB);
 }
 
