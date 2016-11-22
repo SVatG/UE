@@ -22,4 +22,15 @@ void main() {
 
     // Output given color
     outColor = color * light + colorGlow;
+
+    // Calculate and output depth
+    float focusdepth = 5.5f;
+    float focallength = 3.0f;
+    float lensdiameter = 0.1f;
+    float depth = -worldPos.z;
+    float coc = lensdiameter * (abs(depth - focusdepth) / depth) * (focallength / (focusdepth - focallength));
+    coc = abs(coc);
+    coc = coc < 0.01f ? 0.01f : coc;
+
+    outColor.a = coc;
 }

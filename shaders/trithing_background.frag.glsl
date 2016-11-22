@@ -9,6 +9,7 @@ uniform float lightUp;
 out vec4 outColor;
 
 void main() {
+    // Tunnely BG with light up strip
     float lineWidth = 7.0f;
     float lineDuty = 8.0f;
     float maxSegments = 32.0f;
@@ -22,12 +23,15 @@ void main() {
     float offsetDir = -(texcoord.x - 0.5f) * 2.0f;
 
     float offset = 0.0f;
-    if(currentLine < 200) {
+    float coc = 0.1f;
+    if(currentLine < 200.0f) {
         offset = (currentLine - 200f);
+        coc += (1.0f - (currentLine / 200.0f)) * (coc * 1.0f);
     }
 
-    if(currentLine > 720 - 200) {
-        offset = -(currentLine - (720 - 200));
+    if(currentLine > 720.0f - 200.0f) {
+        offset = -(currentLine - (720.0f - 200.0f));
+        coc += ((currentLine - (720.0f - 200.0f)) / 200.0f) * (coc * 1.0f);
     }
 
     currentCol -= offset * offsetDir;
@@ -43,4 +47,7 @@ void main() {
             outColor = lightUpCol;
         }
     }
+
+    // Made up depth
+    outColor.a = coc;
 }
