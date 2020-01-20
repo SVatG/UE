@@ -5,17 +5,27 @@
 #define PARTICLE_SIZE 0.02f
 #define PARTICLE_SPREAD 4.0f
 
+#include "text2d.hpp"
+
 static GLuint backgroundShaderProgram;
 static GLuint trithingShaderProgram;
+static GLuint particleShaderProgram;
 static GLuint composeShaderProgram;
 
 static GLuint renderTexture;
+static GLuint depthTexture;
 static GLuint renderFBO;
 
 typedef struct vertexInfo {
     glm::vec3 pos;
     glm::vec3 normal;
 } vertexInfo;
+
+typedef struct particleInfo {
+    glm::vec3 pos;
+    glm::vec3 speed;
+    float start;
+} particleInfo;
 
 typedef struct objectInfo {
     vertexInfo* vertices;
@@ -32,6 +42,7 @@ objectInfo objectParts[3];
 vertexInfo* tempVerts;
 
 vertexInfo* particleVerts;
+particleInfo* particles;
 GLuint particleBO;
 
 // Geometry
@@ -69,18 +80,33 @@ void effectTrithingInitialize() {
     glCullFace(GL_BACK);
 
     // Shaders
-    backgroundShaderProgram = loadSaqShaderProgram("shaders/trithing_background.frag.glsl");
     composeShaderProgram = loadSaqShaderProgram("shaders/trithing_compose.frag.glsl");
 
-    GLuint vertexShader = loadShader(GL_VERTEX_SHADER, "shaders/trithing_transform.vert.glsl");
-    GLuint fragmentShader = loadShader(GL_FRAGMENT_SHADER, "shaders/trithing_shade.frag.glsl");
-    trithingShaderProgram = makeShaderProgram(vertexShader, fragmentShader);
+    const char* targets[] = {"outColor", "outDepth"};
+    GLuint vertexShader = buildShader(GL_VERTEX_SHADER, getSaqVSSource());
+    GLuint fragmentShader = loadShader(GL_FRAGMENT_SHADER, "shaders/trithing_background.frag.glsl");
+    backgroundShaderProgram = makeShaderProgramMRT(vertexShader, fragmentShader, targets, 2);
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    vertexShader = loadShader(GL_VERTEX_SHADER, "shaders/trithing_transform.vert.glsl");
+    fragmentShader = loadShader(GL_FRAGMENT_SHADER, "shaders/trithing_shade.frag.glsl");
+    trithingShaderProgram = makeShaderProgramMRT(vertexShader, fragmentShader, targets, 2);
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    vertexShader = loadShader(GL_VERTEX_SHADER, "shaders/trithing_transform.vert.glsl");
+    fragmentShader = loadShader(GL_FRAGMENT_SHADER, "shaders/trithing_shade_particles.frag.glsl");
+    particleShaderProgram = makeShaderProgramMRT(vertexShader, fragmentShader, targets, 2);
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
     // FBOs
     renderTexture = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA32F);
     renderFBO = makeFBO(renderTexture);
+
+    depthTexture = makeTextureBuffer(screenWidth, screenHeight, GL_RGBA32F);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, depthTexture, 0);
 
     // Geometry
     objectParts[0] = loadObject("models/trithing_hightri.obj", GL_DYNAMIC_DRAW);
@@ -94,34 +120,23 @@ void effectTrithingInitialize() {
     objectParts[2] = loadObject("models/trithing_innerB.obj");
     objectParts[2].scaleTrack = sync_get_track(rocket, "trithing:scale.inner");
 
-    particleVerts = (vertexInfo*)malloc(sizeof(vertexInfo) * PARTICLE_COUNT * 3);
-    glm::vec3 particleDA = glm::vec3((float)PARTICLE_SIZE, 0.0f, 0.0f);
-    glm::vec3 particleDB = glm::vec3(0.0f, (float)PARTICLE_SIZE, 0.0f);
+    particleVerts = (vertexInfo*)malloc(sizeof(vertexInfo) * PARTICLE_COUNT);
+    particles = (particleInfo*)malloc(sizeof(particleInfo) * PARTICLE_COUNT);
 
     for(int i = 0; i < PARTICLE_COUNT; i++) {
-        particleVerts[i * 3].pos.x = randFloatUnit() * PARTICLE_SPREAD;
-        particleVerts[i * 3].pos.y = randFloatUnit() * PARTICLE_SPREAD;
-        particleVerts[i * 3].pos.z = randFloatUnit() * PARTICLE_SPREAD;
+        particles[i].pos.x = randFloatUnit() * PARTICLE_SPREAD;
+        particles[i].pos.y = randFloatUnit() * PARTICLE_SPREAD;
+        particles[i].pos.z = randFloatUnit() * PARTICLE_SPREAD;
 
-        particleVerts[i * 3].normal.x = randFloatUnit();
-        particleVerts[i * 3].normal.y = randFloatUnit();
-        particleVerts[i * 3].normal.z = randFloatUnit();
-        particleVerts[i * 3].normal = glm::normalize(particleVerts[i * 3].normal) * 0.005f;
+        particles[i].speed.x = randFloatUnit();
+        particles[i].speed.y = randFloatUnit();
+        particles[i].speed.z = randFloatUnit();
+        particles[i].speed = glm::normalize(particles[i].speed) * 0.5f;
 
-        particleVerts[i * 3 + 1].pos = particleVerts[i * 3].pos + particleDA;
-        particleVerts[i * 3 + 2].pos = particleVerts[i * 3].pos + particleDB;
+        particles[i].start = 0.0f;
     }
 
-    /*for(int i = 0; i < PARTICLE_COUNT; i++) {
-        glm::vec3 s1 = particleVerts[i * 3 + 1].pos - particleVerts[i * 3].pos;
-        glm::vec3 s2 = particleVerts[i * 3 + 2].pos - particleVerts[i * 3].pos;
-        glm::vec3 n = glm::normalize(glm::cross(glm::normalize(s1), glm::normalize(s2)));
-        particleVerts[i * 3].normal = n;
-        particleVerts[i * 3 + 1].normal = n;
-        particleVerts[i * 3 + 2].normal = n;
-    }*/
-
-    particleBO = makeBO(GL_ARRAY_BUFFER, particleVerts, (GLsizei)(sizeof(vertexInfo) * PARTICLE_COUNT * 3), GL_DYNAMIC_DRAW);
+    particleBO = makeBO(GL_ARRAY_BUFFER, particleVerts, (GLsizei)(sizeof(vertexInfo) * PARTICLE_COUNT), GL_DYNAMIC_DRAW);
 }
 
 void effectTrithingRender() {
@@ -136,10 +151,22 @@ void effectTrithingRender() {
     glm::mat4 cameraTransform = glm::translate(glm::vec3(0.0f, -0.5f, -6.0f)) * (glm::mat4)glm::quat(glm::vec3(0.8f, 0.0f, 0.0f));
     glm::mat4 cameraNormalview = glm::transpose(glm::inverse(cameraTransform));
 
-    // Draw background
+    // Make sure textures are not bound
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Bind render FBO, enable MRT
     glBindFramebuffer(GL_FRAMEBUFFER, renderFBO);
+
+    GLenum targets[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+    glDrawBuffers(2, targets);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // Draw background
     glDepthMask(GL_FALSE);
     glUseProgram(backgroundShaderProgram);
 
@@ -209,34 +236,36 @@ void effectTrithingRender() {
         glDrawArrays(GL_TRIANGLES, 0, objectParts[i].vertCount);
     }
 
-    // Update particles (TODO: do this properly)
+    // Update particles
     for(int i = 0; i < PARTICLE_COUNT; i++) {
-        particleVerts[i * 3].pos += particleVerts[i * 3].normal;
-        particleVerts[i * 3 + 1].pos += particleVerts[i * 3].normal;
-        particleVerts[i * 3 + 2].pos += particleVerts[i * 3].normal;
+        particleVerts[i].pos = particles[i].pos + particles[i].speed * (bassRow - particles[i].start - 0x140);
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, particleBO);
-    glBufferData(GL_ARRAY_BUFFER, (GLsizei)(sizeof(vertexInfo) * PARTICLE_COUNT * 3), particleVerts, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, (GLsizei)(sizeof(vertexInfo) * PARTICLE_COUNT), particleVerts, GL_DYNAMIC_DRAW);
 
     // Draw particles
-    glUniformMatrix4fv(glGetUniformLocation(trithingShaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-    glUniformMatrix4fv(glGetUniformLocation(trithingShaderProgram, "modelview"), 1, GL_FALSE, glm::value_ptr(cameraTransform));
-    glUniformMatrix4fv(glGetUniformLocation(trithingShaderProgram, "normalview"), 1, GL_FALSE, glm::value_ptr(cameraNormalview));
-    glUniformMatrix4fv(glGetUniformLocation(trithingShaderProgram, "cameraTransform"), 1, GL_FALSE, glm::value_ptr(cameraTransform));
+    glEnable(GL_POINT_SPRITE);
+    glPointSize(5.0f);
 
-    glUniform4f(glGetUniformLocation(trithingShaderProgram, "color"), 0.0f, 0.0f, 0.0f, 1.0f);
-    glUniform4f(glGetUniformLocation(trithingShaderProgram, "colorGlow"), 100.0f * 0.2f, 100.0f * 0.8f, 100.0f * 1.0f, 0.0f);
+    glUseProgram(particleShaderProgram);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glUniformMatrix4fv(glGetUniformLocation(particleShaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(glGetUniformLocation(particleShaderProgram, "modelview"), 1, GL_FALSE, glm::value_ptr(cameraTransform));
+    glUniformMatrix4fv(glGetUniformLocation(particleShaderProgram, "normalview"), 1, GL_FALSE, glm::value_ptr(cameraNormalview));
+
+    glUniform4f(glGetUniformLocation(particleShaderProgram, "colorGlow"), 100.0f * 0.2f, 100.0f * 0.8f, 100.0f * 1.0f, 0.0f);
 
     glBindBuffer(GL_ARRAY_BUFFER, particleBO);
 
-    glEnableVertexAttribArray(glGetAttribLocation(trithingShaderProgram, "vertexIn"));
-    glVertexAttribPointer(glGetAttribLocation(trithingShaderProgram, "vertexIn"), 3, GL_FLOAT, GL_FALSE, sizeof(vertexInfo), (void*)(sizeof(float) * 0));
+    glEnableVertexAttribArray(glGetAttribLocation(particleShaderProgram, "vertexIn"));
+    glVertexAttribPointer(glGetAttribLocation(particleShaderProgram, "vertexIn"), 3, GL_FLOAT, GL_FALSE, sizeof(vertexInfo), (void*)(sizeof(float) * 0));
 
-    glEnableVertexAttribArray(glGetAttribLocation(trithingShaderProgram, "normalIn"));
-    glVertexAttribPointer(glGetAttribLocation(trithingShaderProgram, "normalIn"), 3, GL_FLOAT, GL_FALSE, sizeof(vertexInfo), (void*)(sizeof(float) * 3));
-
-    glDrawArrays(GL_TRIANGLES, 0, PARTICLE_COUNT * 3);
+    glDrawArrays(GL_POINTS, 0, PARTICLE_COUNT);
+    glDisable(GL_BLEND);
 
     // Compose
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -247,12 +276,19 @@ void effectTrithingRender() {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, renderTexture);
 
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthTexture);
+
     glUseProgram(composeShaderProgram);
     glUniform1i(glGetUniformLocation(composeShaderProgram, "baseTex"), 0);
+    glUniform1i(glGetUniformLocation(composeShaderProgram, "depthTex"), 1);
 
     renderSAQ(composeShaderProgram);
 
     glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 

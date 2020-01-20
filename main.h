@@ -1,7 +1,7 @@
 #pragma once
 
-static int screenWidth = 1280;
-static int screenHeight = 720;
+static int screenWidth = 1920;
+static int screenHeight = 1080;
 
 #include <iostream>
 

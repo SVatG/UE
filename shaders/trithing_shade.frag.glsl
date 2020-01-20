@@ -14,6 +14,7 @@ in vec3 normal;
 
 // Output
 out vec4 outColor;
+out vec4 outDepth;
 
 void main() {
     vec3 normalProper = normalize(normal);
@@ -40,5 +41,5 @@ void main() {
     coc = abs(coc);
     coc = coc < 0.01f ? 0.01f : coc;
 
-    outColor.a = coc;
+    outDepth.a = coc;
 }

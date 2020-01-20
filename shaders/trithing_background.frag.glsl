@@ -7,6 +7,7 @@ uniform float lightUp;
 
 // Output
 out vec4 outColor;
+out vec4 outDepth;
 
 void main() {
     // Tunnely BG with light up strip
@@ -49,5 +50,5 @@ void main() {
     }
 
     // Made up depth
-    outColor.a = coc;
+    outDepth.a = coc;
 }

@@ -78,10 +78,15 @@ GLuint makeFBO(GLuint texture) {
     return fbo;
 }
 
+// Return the code for a screen-aligned-quad vertex shader.
+GLchar* getSaqVSSource() {
+    return (GLchar*)"#version 150\n\nin vec2 pos;\nout vec2 texcoord;\nvoid main(void){gl_Position=vec4(pos*2.0f-1.0f, 0.0f, 1.0f);texcoord=pos;}\n\0";
+}
+
 // Build a fullscreen shader
 // The fragment program gets a "texcoord" input from 0 to 1.
 GLuint buildSaqShaderProgram(GLchar* saqFSSource) {
-    GLchar* saqVSSource = (GLchar*)"#version 150\n\nin vec2 pos;\nout vec2 texcoord;\nvoid main(void){gl_Position=vec4(pos*2.0f-1.0f, 0.0f, 1.0f);texcoord=pos;}\n\0";
+    GLchar* saqVSSource = getSaqVSSource();
 
     GLuint saqVS = buildShader(GL_VERTEX_SHADER, saqVSSource);
     GLuint saqFS = buildShader(GL_FRAGMENT_SHADER, saqFSSource);

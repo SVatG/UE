@@ -1,5 +1,6 @@
 #include "main.h"
 #include "effects.h"
+#include "text2d.hpp"
 
 // Global state
 static GLFWwindow* window = NULL;
@@ -31,8 +32,8 @@ static void initializeApplication() {
     // Open a window and set up OpenGL
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    window = glfwCreateWindow(screenWidth, screenHeight, "extremely basic window", NULL, NULL);
-    
+    window = glfwCreateWindow(screenWidth, screenHeight, "extremely basic window", glfwGetPrimaryMonitor(), NULL);
+
     // Set up input handling
     glfwSetKeyCallback(window, glfwInputHandler);
     
@@ -59,25 +60,57 @@ static void terminateApplication() {
 }
 
 // Main
-int main() {
+int main(int argc, char** argv) {
     initializeApplication();
     
+
     // Music!
-    stream = BASS_StreamCreateFile(false, "sbit5.ogg", 0, 0, BASS_STREAM_PRESCAN);
+    //stream = BASS_StreamCreateFile(false, "grey_matter.it", 0, 0, BASS_STREAM_PRESCAN);
+    //stream = BASS_StreamCreateFile(false, "sbit5.ogg", 0, 0, BASS_STREAM_PRESCAN);
+    stream = BASS_MusicLoad(false, "grey_matter.it", 0, 0, BASS_MUSIC_PRESCAN | BASS_SAMPLE_LOOP, 0);
+    BASS_ChannelSetAttribute(stream, BASS_ATTRIB_MUSIC_PSCALER, 256);
     BASS_Start();
     BASS_ChannelPlay(stream, false);
 
-    //effectBlobsInitialize();
-    effectTrithingInitialize();
+    int curEffect = 0;
+
+    effectBlobsInitialize();
+
+    const sync_track* switch_track = sync_get_track(rocket, "global:switch");
+    initText2D("texture/font.tga");
 
     // Demo main loop
     while (!glfwWindowShouldClose(window)) {
         // TODO: postprod / fbos
         syncUpdate(rocket, stream);
+        float bassRow = (float)bassGetRow(stream);
+
+        // Switch
+        int nextEffect = sync_get_val(switch_track, bassRow);
+        if (nextEffect != curEffect) {
+            if (curEffect == 1) {
+                curEffect = 0;
+                effectTrithingTerminate();
+                effectBlobsInitialize();
+            }
+            else {
+                curEffect = 1;
+                effectBlobsTerminate();
+                effectTrithingInitialize();
+            }
+        }
 
         // Test effect
-        //effectBlobsRender();
-        effectTrithingRender();
+        if (curEffect == 0) {
+            effectBlobsRender();
+        }
+        else {
+            effectTrithingRender();
+        }
+
+        // Text!
+        glClear(GL_DEPTH_BUFFER_BIT);
+        printText2D("this excellent SVatG party production has been brought to you by halcy and Saga Musix. How many SVatG engineers does it take to create a bitmap font? Two.               Greetings to: k2 ~ TiTAN ~ SunSpire ~ cncd ~ Nuance ~ logicoma ~ mercury ~ spacepigs ~ jvb ~ Poo-Brain ~ RNO ~ dotUser ~ Suricrasia Online ~ Alcatraz ~ Wursthupe ~ Kaltgetraenkekabel                    We hope you have a great party here at Nordlicht 2019 in sunny Bremen (ha ha)                this scroller will now repeat...", -bassRow * 35.0 + 3000, sin(bassRow) * 60 + 120, 30);
 
         // Draw to screen
         glfwSwapBuffers(window);
@@ -85,9 +118,14 @@ int main() {
         // Allow GLFW to do event handling
         glfwPollEvents();
     }
-    
-    //effectBlobsTerminate();
-    effectTrithingTerminate();
+
+    // Test effect
+    if (curEffect == 0) {
+        effectBlobsTerminate();
+    }
+    else {
+        effectTrithingTerminate();
+    }
 
     terminateApplication();
 }

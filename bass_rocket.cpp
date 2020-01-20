@@ -1,4 +1,5 @@
 #include "bass_rocket.h"
+#pragma comment(lib, "Ws2_32.lib")
 
 #ifdef _WIN32
 #include <direct.h>  
@@ -18,7 +19,7 @@ static const bool syncClient = true;
 // Configure your song
 static const float bpm = 125.0; /* beats per minute */
 static const int rpb = 4; /* rows per beat */
-static const double row_rate = (double(bpm) / 60) * rpb;
+static const double row_rate = 0.5; // (double(bpm) / 60) * rpb;
 
 // A bunch of functions straight from the Rocket example code
 void bassPause(void *d, int flag) {
@@ -33,8 +34,12 @@ void bassPause(void *d, int flag) {
 
 void bassSetRow(void *d, int row) {
     HSTREAM h = *((HSTREAM *)d);
-    QWORD pos = BASS_ChannelSeconds2Bytes(h, row / row_rate);
-    BASS_ChannelSetPosition(h, pos, BASS_POS_BYTE);
+    int row_2 = row / row_rate;
+    int low = row_2 / 64;
+    int hi = (row_2 % 64) * 256.0;
+
+    //QWORD pos = BASS_ChannelSeconds2Bytes(h, row / row_rate);
+    BASS_ChannelSetPosition(h, low | (hi << 16), BASS_POS_MUSIC_ORDER);
 }
 
 int bassIsPlaying(void *d) {
@@ -43,9 +48,10 @@ int bassIsPlaying(void *d) {
 }
 
 double bassGetRow(HSTREAM h) {
-    QWORD pos = BASS_ChannelGetPosition(h, BASS_POS_BYTE);
-    double time = BASS_ChannelBytes2Seconds(h, pos);
-    return time * row_rate;
+    QWORD pos = BASS_ChannelGetPosition(h, BASS_POS_MUSIC_ORDER);
+    //double time = BASS_ChannelBytes2Seconds(h, pos);
+    //return time * row_rate;
+    return (LOWORD(pos) * 64 + HIWORD(pos) / 256.0) * row_rate;
 }
 
 struct sync_cb bass_cb = {

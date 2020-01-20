@@ -23,6 +23,7 @@ GLuint makeTextureBuffer(int w, int h, GLint internalFormat);
 GLuint makeFBO(GLuint texture);
 void renderSAQ(GLuint texture);
 
+GLchar* getSaqVSSource();
 GLuint loadShader(GLenum type, const char *file);
 GLuint buildShader(GLenum type, GLchar* shaderSrc);
 GLuint makeShaderProgram(GLuint vertexShader, GLuint fragmentShader);

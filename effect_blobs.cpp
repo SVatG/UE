@@ -321,7 +321,7 @@ void drawMetaballs(glm::mat4 projection, glm::mat4 modelview, glm::mat4 normalvi
                 int blobState = (int)floor(((float)((int)bassRow % 16)) / 4.0);
                 float blobGlow = 0.0f;
                 if(rand() % 4 == blobState) {
-                    blobGlow = bassRow / 4.0f;
+                    blobGlow = bassRow / 2.0f;
                     blobGlow = 1.0f - (blobGlow - floor(blobGlow));
                     blobGlow = fmax(0.0f, blobGlow);
                 }
