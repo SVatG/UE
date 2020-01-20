@@ -31,5 +31,5 @@ x64/
 packages/
 .vs/
 *.sdf
-packages.config
+#packages.config
 *.opendb
